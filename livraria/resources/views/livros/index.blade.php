@@ -163,9 +163,12 @@
                     
                     <!-- Favorite Icon -->
                     <div class="position-absolute top-0 start-0 m-2">
-                        <button class="btn btn-sm btn-light rounded-circle" onclick="toggleFavorite({{ $livro->id }})" 
+                        @php
+                            $isFav = auth()->check() && auth()->user()->favorites()->where('livro_id', $livro->id)->exists();
+                        @endphp
+                        <button class="btn btn-sm btn-light rounded-circle" data-favorite-button="{{ $livro->id }}" onclick="toggleFavorite({{ $livro->id }})"
                                 data-bs-toggle="tooltip" title="Adicionar aos favoritos">
-                            <i class="far fa-heart"></i>
+                            <i class="{{ $isFav ? 'fas' : 'far' }} fa-heart" @if($isFav) style="color:#dc3545" @endif></i>
                         </button>
                     </div>
                 </div>
@@ -310,22 +313,27 @@
 <!-- JavaScript for favorites -->
 <script>
 function toggleFavorite(livroId) {
-    // Implementar funcionalidade de favoritos se necessário
-    console.log('Favorito clicado para livro:', livroId);
-    
-    // Por enquanto, apenas mudamos o ícone
-    const button = event.currentTarget;
-    const icon = button.querySelector('i');
-    
-    if (icon.classList.contains('far')) {
-        icon.classList.remove('far');
-        icon.classList.add('fas');
-        icon.style.color = '#dc3545';
-    } else {
-        icon.classList.remove('fas');
-        icon.classList.add('far');
-        icon.style.color = '';
-    }
+    fetch('/livros/' + livroId + '/favorite', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const button = document.querySelector('[data-favorite-button="' + livroId + '"]');
+        const icon = button.querySelector('i');
+        if (data.favorited) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            icon.style.color = '#dc3545';
+        } else {
+            icon.classList.remove('fas');
+            icon.classList.add('far');
+            icon.style.color = '';
+        }
+    });
 }
 
 // Initialize tooltips
