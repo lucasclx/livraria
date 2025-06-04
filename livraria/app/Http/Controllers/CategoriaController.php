@@ -6,6 +6,7 @@ use App\Models\Categoria;
 use App\Http\Requests\CategoriaRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class CategoriaController extends Controller
@@ -73,8 +74,8 @@ class CategoriaController extends Controller
     public function destroy(Categoria $categoria)
     {
         try {
-            // Verifica se há livros vinculados
-            if ($categoria->livros()->count() > 0) {
+            // Verifica se há livros vinculados quando coluna existe
+            if (Schema::hasColumn('livros', 'categoria_id') && $categoria->livros()->count() > 0) {
                 return redirect()->route('categorias.index')
                     ->with('error', 'Não é possível excluir a categoria pois existem livros vinculados a ela.');
             }
