@@ -158,7 +158,10 @@ class LivroSeeder extends Seeder
                 'autor' => 'Sun Tzu',
                 'isbn' => '9788525431011',
                 'editora' => 'Globo Livros',
-                'ano_publicacao' => -500,
+                // Sun Tzu escreveu "A Arte da Guerra" aproximadamente no século V a.C.
+                // Adotamos o ano 500 como valor positivo para representar esse período
+                // histórico de forma válida na base de dados.
+                'ano_publicacao' => 500,
                 'preco' => 24.90,
                 'paginas' => 160,
                 'sinopse' => 'Tratado militar chinês que explora estratégias de guerra e táticas que podem ser aplicadas em negócios e vida pessoal.',
