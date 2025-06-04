@@ -431,6 +431,17 @@
                     <a class="nav-link" href="#" onclick="showStats()">
                         <i class="fas fa-chart-line me-1"></i> Relatórios
                     </a>
+                    <a class="nav-link position-relative" href="{{ route('cart.index') }}">
+                        <i class="fas fa-shopping-cart"></i>
+                        @php
+                            $cartCount = session('cart_id') ? \App\Models\Cart::withCount('items')->find(session('cart_id'))?->items_count : 0;
+                        @endphp
+                        @if($cartCount > 0)
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ $cartCount }}
+                            </span>
+                        @endif
+                    </a>
                 </div>
             </div>
         </div>
