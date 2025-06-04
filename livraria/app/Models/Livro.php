@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
+use App\Models\User;
 
 class Livro extends Model
 {
@@ -131,5 +132,10 @@ class Livro extends Model
     {
         $this->increment('estoque', $quantidade);
         return true;
+    }
+
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
     }
 }
