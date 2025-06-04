@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Categoria;
+use App\Http\Requests\CategoriaRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+class CategoriaController extends Controller
+{
+    public function index()
+    {
+        $categorias = Categoria::orderBy('nome')->paginate(10);
+        return view('categorias.index', compact('categorias'));
+    }
+
+    public function create()
+    {
+        return view('categorias.create');
+    }
+
+    public function store(CategoriaRequest $request)
+    {
+        $data = $request->validated();
+
+        if ($request->hasFile('imagem')) {
+            $imagem = $request->file('imagem');
+            $nomeImagem = Str::random(20) . '.' . $imagem->getClientOriginalExtension();
+            $imagem->storeAs('public/categorias', $nomeImagem);
+            $data['imagem'] = $nomeImagem;
+        }
+
+        Categoria::create($data);
+
+        return redirect()->route('categorias.index')
+            ->with('success', 'Categoria criada com sucesso!');
+    }
+
+    public function show(Categoria $categoria)
+    {
+        return view('categorias.show', compact('categoria'));
+    }
+
+    public function edit(Categoria $categoria)
+    {
+        return view('categorias.edit', compact('categoria'));
+    }
+
+    public function update(CategoriaRequest $request, Categoria $categoria)
+    {
+        $data = $request->validated();
+
+        if ($request->hasFile('imagem')) {
+            // Remove imagem antiga
+            if ($categoria->imagem) {
+                Storage::delete('public/categorias/' . $categoria->imagem);
+            }
+
+            $imagem = $request->file('imagem');
+            $nomeImagem = Str::random(20) . '.' . $imagem->getClientOriginalExtension();
+            $imagem->storeAs('public/categorias', $nomeImagem);
+            $data['imagem'] = $nomeImagem;
+        }
+
+        $categoria->update($data);
+
+        return redirect()->route('categorias.index')
+            ->with('success', 'Categoria atualizada com sucesso!');
+    }
+
+    public function destroy(Categoria $categoria)
+    {
+        try {
+            // Verifica se há livros vinculados
+            if ($categoria->livros()->count() > 0) {
+                return redirect()->route('categorias.index')
+                    ->with('error', 'Não é possível excluir a categoria pois existem livros vinculados a ela.');
+            }
+
+            $categoria->delete();
+
+            return redirect()->route('categorias.index')
+                ->with('success', 'Categoria excluída com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->route('categorias.index')
+                ->with('error', 'Erro ao excluir categoria: ' . $e->getMessage());
+        }
+    }
+
+    public function confirmDelete(Categoria $categoria)
+    {
+        return view('categorias.delete', compact('categoria'));
+    }
+}
