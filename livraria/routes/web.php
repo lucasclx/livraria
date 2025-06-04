@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CartController;
 
+
 // Página inicial
 Route::get('/', function () {
     return view('welcome');
@@ -13,6 +14,7 @@ Route::get('/', function () {
 
 // Rotas para Livros
 Route::resource('livros', LivroController::class);
+Route::post('livros/{livro}/favorite', [FavoriteController::class, 'toggle'])->name('livros.favorite');
 
 // Rotas para Categorias (se você quiser usar)
 Route::resource('categorias', CategoriaController::class);
