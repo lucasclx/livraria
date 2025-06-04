@@ -55,13 +55,13 @@ class Livro extends Model
         }
         
         // Imagem padrão - criar um placeholder se não existir
-        return data_url('image/svg+xml;base64,' . base64_encode('
+        return 'data:image/svg+xml;base64,' . base64_encode('
             <svg width="200" height="300" xmlns="http://www.w3.org/2000/svg">
                 <rect width="200" height="300" fill="#f8f9fa" stroke="#dee2e6"/>
                 <text x="100" y="140" text-anchor="middle" fill="#6c757d" font-size="14">Sem Imagem</text>
                 <text x="100" y="160" text-anchor="middle" fill="#6c757d" font-size="24">📚</text>
             </svg>
-        '));
+        ');
     }
 
     public function getStatusEstoqueAttribute()
