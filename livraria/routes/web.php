@@ -5,6 +5,7 @@ use App\Http\Controllers\LivroController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\CartController;
 
 
 
