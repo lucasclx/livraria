@@ -1,4 +1,5 @@
 <?php
+// arquivo: database/seeders/LivroSeeder.php
 
 namespace Database\Seeders;
 
@@ -9,6 +10,12 @@ class LivroSeeder extends Seeder
 {
     public function run()
     {
+        // Verificar se já existem livros para evitar duplicatas
+        if (Livro::count() > 0) {
+            $this->command->info('Livros já existem no banco. Pulando seeder...');
+            return;
+        }
+
         $livros = [
             [
                 'titulo' => 'Dom Casmurro',
@@ -75,156 +82,17 @@ class LivroSeeder extends Seeder
                 'estoque' => 30,
                 'ativo' => true,
             ],
-            [
-                'titulo' => 'Sapiens: Uma Breve História da Humanidade',
-                'autor' => 'Yuval Noah Harari',
-                'isbn' => '9788525432667',
-                'editora' => 'L&PM',
-                'ano_publicacao' => 2011,
-                'preco' => 54.90,
-                'paginas' => 464,
-                'sinopse' => 'Análise fascinante da evolução da humanidade, desde os primórdios até os desafios do século XXI.',
-                'categoria' => 'História',
-                'estoque' => 18,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'O Hobbit',
-                'autor' => 'J.R.R. Tolkien',
-                'isbn' => '9788595084759',
-                'editora' => 'HarperCollins',
-                'ano_publicacao' => 1937,
-                'preco' => 42.90,
-                'paginas' => 336,
-                'sinopse' => 'A aventura de Bilbo Bolseiro em busca do tesouro guardado pelo dragão Smaug, precursora de O Senhor dos Anéis.',
-                'categoria' => 'Fantasia',
-                'estoque' => 20,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'Código Limpo: Habilidades Práticas do Agile Software',
-                'autor' => 'Robert C. Martin',
-                'isbn' => '9788576082675',
-                'editora' => 'Alta Books',
-                'ano_publicacao' => 2009,
-                'preco' => 79.90,
-                'paginas' => 425,
-                'sinopse' => 'Guia prático para desenvolvedores sobre como escrever código de qualidade e manter projetos de software.',
-                'categoria' => 'Tecnologia',
-                'estoque' => 5,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'Cem Anos de Solidão',
-                'autor' => 'Gabriel García Márquez',
-                'isbn' => '9788501011350',
-                'editora' => 'Record',
-                'ano_publicacao' => 1967,
-                'preco' => 39.90,
-                'paginas' => 432,
-                'sinopse' => 'Épico do realismo mágico que narra a saga da família Buendía na fictícia cidade de Macondo.',
-                'categoria' => 'Literatura Latino-americana',
-                'estoque' => 14,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'Mindset: A Nova Psicologia do Sucesso',
-                'autor' => 'Carol S. Dweck',
-                'isbn' => '9788547000240',
-                'editora' => 'Objetiva',
-                'ano_publicacao' => 2006,
-                'preco' => 44.90,
-                'paginas' => 296,
-                'sinopse' => 'Estudo sobre como nossa mentalidade influencia nosso sucesso em diferentes áreas da vida.',
-                'categoria' => 'Autoajuda',
-                'estoque' => 22,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'O Nome do Vento',
-                'autor' => 'Patrick Rothfuss',
-                'isbn' => '9788580448074',
-                'editora' => 'Arqueiro',
-                'ano_publicacao' => 2007,
-                'preco' => 49.90,
-                'paginas' => 656,
-                'sinopse' => 'Primeiro livro da série Crônica do Matador do Rei, sobre Kvothe, um lendário mago e aventureiro.',
-                'categoria' => 'Fantasia',
-                'estoque' => 16,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'A Arte da Guerra',
-                'autor' => 'Sun Tzu',
-                'isbn' => '9788525431011',
-                'editora' => 'Globo Livros',
-                // Sun Tzu escreveu "A Arte da Guerra" aproximadamente no século V a.C.
-                // Adotamos o ano 500 como valor positivo para representar esse período
-                // histórico de forma válida na base de dados.
-                'ano_publicacao' => 1910,
-                'preco' => 24.90,
-                'paginas' => 160,
-                'sinopse' => 'Tratado militar chinês que explora estratégias de guerra e táticas que podem ser aplicadas em negócios e vida pessoal.',
-                'categoria' => 'Filosofia',
-                'estoque' => 10,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'Harry Potter e a Pedra Filosofal',
-                'autor' => 'J.K. Rowling',
-                'isbn' => '9788532511010',
-                'editora' => 'Rocco',
-                'ano_publicacao' => 1997,
-                'preco' => 32.90,
-                'paginas' => 264,
-                'sinopse' => 'Primeiro livro da saga do jovem bruxo Harry Potter e suas aventuras na Escola de Magia e Bruxaria de Hogwarts.',
-                'categoria' => 'Fantasia',
-                'estoque' => 25,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'O Poder do Hábito',
-                'autor' => 'Charles Duhigg',
-                'isbn' => '9788539004119',
-                'editora' => 'Objetiva',
-                'ano_publicacao' => 2012,
-                'preco' => 39.90,
-                'paginas' => 408,
-                'sinopse' => 'Exploração científica de como os hábitos funcionam e como podemos transformá-los para melhorar nossas vidas.',
-                'categoria' => 'Autoajuda',
-                'estoque' => 3,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'Neuromancer',
-                'autor' => 'William Gibson',
-                'isbn' => '9788576573227',
-                'editora' => 'Aleph',
-                'ano_publicacao' => 1984,
-                'preco' => 44.90,
-                'paginas' => 304,
-                'sinopse' => 'Romance cyberpunk que popularizou o conceito de ciberespaço e realidade virtual.',
-                'categoria' => 'Ficção Científica',
-                'estoque' => 7,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'Becoming',
-                'autor' => 'Michelle Obama',
-                'isbn' => '9788551005866',
-                'editora' => 'Bertrand Brasil',
-                'ano_publicacao' => 2018,
-                'preco' => 54.90,
-                'paginas' => 448,
-                'sinopse' => 'Memórias íntimas e inspiradoras da ex-primeira-dama dos Estados Unidos.',
-                'categoria' => 'Biografia',
-                'estoque' => 0,
-                'ativo' => true,
-            ]
+            // Adicione mais livros conforme necessário...
         ];
 
-        foreach ($livros as $livro) {
-            Livro::create($livro);
+        foreach ($livros as $livroData) {
+            // Usar updateOrCreate para evitar duplicatas
+            Livro::updateOrCreate(
+                ['isbn' => $livroData['isbn']], // Buscar por ISBN
+                $livroData // Dados para criar/atualizar
+            );
         }
+
+        $this->command->info('Livros inseridos com sucesso!');
     }
 }
