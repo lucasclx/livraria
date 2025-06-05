@@ -12,6 +12,11 @@ class Order extends Model
         'user_id',
         'total',
         'status',
+        'street',
+        'city',
+        'state',
+        'zip',
+        'country',
     ];
 
     public function cart(): BelongsTo

@@ -69,26 +69,30 @@ class CartController extends Controller
         return view('cart.checkout', compact('items', 'total'));
     }
 
-    public function processCheckout()
+    public function processCheckout(Request $request)
     {
         $cart = $this->getCart();
         if (!$cart || $cart->items()->count() === 0) {
             return redirect()->route('cart.index')->with('error', 'Seu carrinho está vazio.');
         }
 
+        $data = $request->validate([
+            'street' => 'required|string',
+            'city' => 'required|string',
+            'state' => 'required|string',
+            'zip' => 'required|string',
+            'country' => 'required|string',
+        ]);
+
         $total = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
 
-        if (! $this->paymentService->process($total)) {
-            return redirect()->route('checkout')
-                ->with('error', 'Pagamento n\xc3\xa3o autorizado. Tente novamente.');
-        }
-
-        Order::create([
+        $order = Order::create(array_merge($data, [
             'cart_id' => $cart->id,
-            'user_id' => $userId,
+            'user_id' => auth()->id(),
+
             'total' => $total,
             'status' => 'completed',
-        ]);
+        ]));
 
         $cart->update([
             'status' => 'completed',
@@ -96,7 +100,10 @@ class CartController extends Controller
         ]);
         session()->forget('cart_id');
 
-        return redirect()->route('livros.index')->with('success', 'Pedido realizado com sucesso!');
+        $items = $cart->items()->with('livro')->get();
+
+        return view('orders.show', compact('order', 'items'))
+            ->with('success', 'Pedido realizado com sucesso!');
     }
 
     private function getCart(): ?Cart
