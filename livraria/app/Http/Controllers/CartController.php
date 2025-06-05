@@ -74,13 +74,19 @@ class CartController extends Controller
 
         $total = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
 
+        $userId = auth()->id();
+
         Order::create([
             'cart_id' => $cart->id,
+            'user_id' => $userId,
             'total' => $total,
             'status' => 'completed',
         ]);
 
-        $cart->update(['status' => 'completed']);
+        $cart->update([
+            'status' => 'completed',
+            'user_id' => $userId,
+        ]);
         session()->forget('cart_id');
 
         return redirect()->route('livros.index')->with('success', 'Pedido realizado com sucesso!');
