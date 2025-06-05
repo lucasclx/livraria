@@ -6,6 +6,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -30,6 +31,9 @@ Route::post('/cart/item/{item}/update', [CartController::class, 'update'])->name
 Route::post('/cart/item/{item}/remove', [CartController::class, 'remove'])->name('cart.item.remove');
 Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
 Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
+
+// Pedidos do usuário
+Route::get('/orders', [OrderController::class, 'index'])->middleware('auth')->name('orders.index');
 
 // Dashboard (se estiver usando autenticação)
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');

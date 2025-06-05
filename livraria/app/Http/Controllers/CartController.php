@@ -6,10 +6,14 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Livro;
 use App\Models\Order;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    public function __construct(private PaymentService $paymentService)
+    {
+    }
     public function index()
     {
         $cart = $this->getCart();
@@ -85,11 +89,15 @@ class CartController extends Controller
         $order = Order::create(array_merge($data, [
             'cart_id' => $cart->id,
             'user_id' => auth()->id(),
+
             'total' => $total,
             'status' => 'completed',
         ]));
 
-        $cart->update(['status' => 'completed']);
+        $cart->update([
+            'status' => 'completed',
+            'user_id' => $userId,
+        ]);
         session()->forget('cart_id');
 
         $items = $cart->items()->with('livro')->get();
