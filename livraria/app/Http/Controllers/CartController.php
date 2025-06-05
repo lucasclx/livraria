@@ -6,10 +6,14 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Livro;
 use App\Models\Order;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    public function __construct(private PaymentService $paymentService)
+    {
+    }
     public function index()
     {
         $cart = $this->getCart();
@@ -73,6 +77,11 @@ class CartController extends Controller
         }
 
         $total = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+
+        if (! $this->paymentService->process($total)) {
+            return redirect()->route('checkout')
+                ->with('error', 'Pagamento n\xc3\xa3o autorizado. Tente novamente.');
+        }
 
         Order::create([
             'cart_id' => $cart->id,
