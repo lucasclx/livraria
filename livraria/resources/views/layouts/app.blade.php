@@ -442,6 +442,11 @@
                             </span>
                         @endif
                     </a>
+                    @auth
+                        <a class="nav-link" href="{{ route('orders.index') }}">
+                            <i class="fas fa-list me-1"></i> Meus Pedidos
+                        </a>
+                    @endauth
                 </div>
             </div>
         </div>

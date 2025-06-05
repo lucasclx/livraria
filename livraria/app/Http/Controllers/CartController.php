@@ -6,10 +6,14 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Livro;
 use App\Models\Order;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
+    public function __construct(private PaymentService $paymentService)
+    {
+    }
     public function index()
     {
         $cart = $this->getCart();
@@ -65,25 +69,41 @@ class CartController extends Controller
         return view('cart.checkout', compact('items', 'total'));
     }
 
-    public function processCheckout()
+    public function processCheckout(Request $request)
     {
         $cart = $this->getCart();
         if (!$cart || $cart->items()->count() === 0) {
             return redirect()->route('cart.index')->with('error', 'Seu carrinho está vazio.');
         }
 
-        $total = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
-
-        Order::create([
-            'cart_id' => $cart->id,
-            'total' => $total,
-            'status' => 'completed',
+        $data = $request->validate([
+            'street' => 'required|string',
+            'city' => 'required|string',
+            'state' => 'required|string',
+            'zip' => 'required|string',
+            'country' => 'required|string',
         ]);
 
-        $cart->update(['status' => 'completed']);
+        $total = $cart->items->sum(fn ($item) => $item->price * $item->quantity);
+
+        $order = Order::create(array_merge($data, [
+            'cart_id' => $cart->id,
+            'user_id' => auth()->id(),
+
+            'total' => $total,
+            'status' => 'completed',
+        ]));
+
+        $cart->update([
+            'status' => 'completed',
+            'user_id' => $userId,
+        ]);
         session()->forget('cart_id');
 
-        return redirect()->route('livros.index')->with('success', 'Pedido realizado com sucesso!');
+        $items = $cart->items()->with('livro')->get();
+
+        return view('orders.show', compact('order', 'items'))
+            ->with('success', 'Pedido realizado com sucesso!');
     }
 
     private function getCart(): ?Cart
