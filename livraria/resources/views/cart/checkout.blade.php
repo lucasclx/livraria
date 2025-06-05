@@ -30,6 +30,30 @@
     </table>
     <form method="POST" action="{{ route('checkout.process') }}">
         @csrf
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Rua</label>
+                <input type="text" name="street" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Cidade</label>
+                <input type="text" name="city" class="form-control" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Estado</label>
+                <input type="text" name="state" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">CEP</label>
+                <input type="text" name="zip" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">País</label>
+                <input type="text" name="country" class="form-control" required>
+            </div>
+        </div>
         <button class="btn btn-gold">Confirmar Pedido</button>
     </form>
 @else
