@@ -7,36 +7,59 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\LojaController;
 use Illuminate\Support\Facades\Auth;
 
+// Página inicial da loja
+Route::get('/', [LojaController::class, 'index'])->name('loja.index');
 
+// Rotas da loja pública
+Route::group(['prefix' => 'loja', 'as' => 'loja.'], function() {
+    Route::get('/catalogo', [LivroController::class, 'index'])->name('catalogo');
+    Route::get('/categoria/{categoria}', [LojaController::class, 'categoria'])->name('categoria');
+    Route::get('/buscar', [LojaController::class, 'buscar'])->name('buscar');
+    Route::get('/livro/{livro}', [LojaController::class, 'detalhes'])->name('detalhes');
+    Route::get('/favoritos', [LojaController::class, 'favoritos'])->middleware('auth')->name('favoritos');
+});
 
-// Página inicial
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Rotas administrativas para Livros (protegidas por autenticação)
+Route::group(['prefix' => 'admin', 'middleware' => 'auth'], function() {
+    Route::resource('livros', LivroController::class);
+    Route::resource('categorias', CategoriaController::class);
+    Route::get('categorias/{categoria}/delete', [CategoriaController::class, 'confirmDelete'])->name('categorias.delete');
+});
 
-// Rotas para Livros
-Route::resource('livros', LivroController::class);
+// Rotas para funcionalidades de usuário
 Route::post('livros/{livro}/favorite', [FavoriteController::class, 'toggle'])->name('livros.favorite');
 
-// Rotas para Categorias (se você quiser usar)
-Route::resource('categorias', CategoriaController::class);
-Route::get('categorias/{categoria}/delete', [CategoriaController::class, 'confirmDelete'])->name('categorias.delete');
-
 // Carrinho de compras
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart/add/{livro}', [CartController::class, 'add'])->name('cart.add');
-Route::post('/cart/item/{item}/update', [CartController::class, 'update'])->name('cart.item.update');
-Route::post('/cart/item/{item}/remove', [CartController::class, 'remove'])->name('cart.item.remove');
-Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
-Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
+Route::group(['prefix' => 'carrinho', 'as' => 'cart.'], function() {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/adicionar/{livro}', [CartController::class, 'add'])->name('add');
+    Route::post('/item/{item}/atualizar', [CartController::class, 'update'])->name('item.update');
+    Route::post('/item/{item}/remover', [CartController::class, 'remove'])->name('item.remove');
+});
 
-// Pedidos do usuário
-Route::get('/orders', [OrderController::class, 'index'])->middleware('auth')->name('orders.index');
+// Checkout
+Route::group(['middleware' => 'auth'], function() {
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+    Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
+    Route::get('/pedidos', [OrderController::class, 'index'])->name('orders.index');
+});
 
-// Dashboard (se estiver usando autenticação)
+// Dashboard administrativo
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
 
-// Autenticação (se estiver usando)
+// Rotas de autenticação
 Auth::routes();
+
+// API Routes para AJAX
+Route::group(['prefix' => 'api', 'middleware' => 'web'], function() {
+    Route::post('/cart/quick-add/{livro}', [CartController::class, 'quickAdd'])->name('api.cart.quick-add');
+    Route::get('/livros/search', [LivroController::class, 'searchApi'])->name('api.livros.search');
+    Route::get('/categorias/popular', [LojaController::class, 'categoriasPopulares'])->name('api.categorias.popular');
+});
+
+// Redirecionamento para compatibilidade
+Route::redirect('/home', '/dashboard');
+Route::redirect('/livros', '/loja/catalogo');
