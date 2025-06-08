@@ -33,10 +33,26 @@ This project is a simple online bookstore built with Laravel. It allows you to m
    ```bash
    php artisan migrate
    ```
-6. Start the development server:
+6. Seed the database with sample data:
+   ```bash
+   php artisan db:seed
+   ```
+7. Start the development server:
    ```bash
    php artisan serve
    ```
+
+## Database Seeding
+
+Running `php artisan db:seed` executes the default `DatabaseSeeder`, which calls
+`CategoriaSeeder` and `LivroSeeder` to populate example categories and books.
+
+Other seeders available in `database/seeders`:
+
+- **LivroSeederMelhorado** – adds a large catalog of books with extra details.
+- **ProdutoSeeder** – inserts sample products for an e-commerce showcase.
+
+You can invoke any seeder directly using `php artisan db:seed --class=NameOfSeeder`.
 
 ## Running Tests
 
