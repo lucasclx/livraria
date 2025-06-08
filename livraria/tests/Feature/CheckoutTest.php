@@ -39,6 +39,7 @@ class CheckoutTest extends TestCase
             'state' => 'TS',
             'zip' => '12345',
             'country' => 'Testland',
+            'payment_method' => 'pix',
         ];
         $response = $this->post('/checkout', $checkoutData);
         $response->assertStatus(200);
