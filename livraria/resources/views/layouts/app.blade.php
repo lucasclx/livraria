@@ -412,7 +412,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('livros.index') }}">
+            <a class="navbar-brand" href="{{ route('loja.index') }}">
                 Biblioteca Literária
             </a>
             
