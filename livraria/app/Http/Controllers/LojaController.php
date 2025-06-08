@@ -50,12 +50,18 @@ class LojaController extends Controller
             'livros_estoque' => Livro::where('estoque', '>', 0)->sum('estoque')
         ];
 
+        // Catálogo completo para a página inicial
+        $livros = Livro::ativo()
+            ->emEstoque()
+            ->paginate(12);
+
         return view('loja.index', compact(
             'livrosDestaque',
-            'livrosMaisVendidos', 
+            'livrosMaisVendidos',
             'livrosPorCategoria',
             'ofertas',
-            'estatisticas'
+            'estatisticas',
+            'livros'
         ));
     }
 

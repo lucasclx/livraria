@@ -322,6 +322,22 @@
 </section>
 @endif
 
+@if($livros->count() > 0)
+<section class="mb-5">
+    <h2 class="section-title text-center w-100">📚 Nosso Catálogo</h2>
+    <div class="row">
+        @foreach($livros as $livro)
+            <div class="col-lg-3 col-md-6 mb-4">
+                @include('components.livro-card', ['livro' => $livro])
+            </div>
+        @endforeach
+    </div>
+    <div class="d-flex justify-content-center mt-4">
+        {{ $livros->links() }}
+    </div>
+</section>
+@endif
+
 <!-- Call to Action -->
 <section class="text-center py-5 bg-light rounded-3">
     <div class="container">
