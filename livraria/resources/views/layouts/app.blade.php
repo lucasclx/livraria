@@ -438,6 +438,16 @@
                             <i class="fas fa-list me-1"></i> Meus Pedidos
                         </a>
                     @endauth
+                    @guest
+                        <a class="nav-link" href="{{ route('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i> Login
+                        </a>
+                        @if (Route::has('register'))
+                            <a class="nav-link" href="{{ route('register') }}">
+                                <i class="fas fa-user-plus me-1"></i> Registrar-se
+                            </a>
+                        @endif
+                    @endguest
                 </div>
             </div>
         </div>
