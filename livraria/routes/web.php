@@ -15,7 +15,7 @@ Route::get('/', [LojaController::class, 'index'])->name('loja.index');
 
 // Rotas da loja pública
 Route::group(['prefix' => 'loja', 'as' => 'loja.'], function() {
-    Route::get('/catalogo', [LivroController::class, 'index'])->name('catalogo');
+    Route::get('/catalogo', [LojaController::class, 'catalogo'])->name('catalogo');
     Route::get('/categoria/{categoria}', [LojaController::class, 'categoria'])->name('categoria');
     Route::get('/buscar', [LojaController::class, 'buscar'])->name('buscar');
     Route::get('/livro/{livro}', [LojaController::class, 'detalhes'])->name('detalhes');
@@ -36,8 +36,11 @@ Route::post('livros/{livro}/favorite', [FavoriteController::class, 'toggle'])->n
 Route::group(['prefix' => 'carrinho', 'as' => 'cart.'], function() {
     Route::get('/', [CartController::class, 'index'])->name('index');
     Route::post('/adicionar/{livro}', [CartController::class, 'add'])->name('add');
+    Route::post('/adicionar-rapido/{livro}', [CartController::class, 'quickAdd'])->name('quick-add');
     Route::post('/item/{item}/atualizar', [CartController::class, 'update'])->name('item.update');
     Route::post('/item/{item}/remover', [CartController::class, 'remove'])->name('item.remove');
+    Route::post('/limpar', [CartController::class, 'clear'])->name('clear');
+    Route::get('/contador', [CartController::class, 'getCartCount'])->name('count');
 });
 
 // Checkout

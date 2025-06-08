@@ -21,17 +21,17 @@ class LojaController extends Controller
         // Livros mais vendidos (simulado por mais visualizados)
         $livrosMaisVendidos = Livro::where('ativo', true)
             ->where('estoque', '>', 0)
-            ->inRandomOrder() // Em produção, seria orderBy('vendas', 'desc')
+            ->inRandomOrder()
             ->limit(6)
             ->get();
 
-        // Categorias populares
-        $categoriasPopulares = Livro::select('categoria', DB::raw('count(*) as total'))
+        // Livros por categoria
+        $livrosPorCategoria = Livro::select('categoria', DB::raw('count(*) as total'))
             ->where('ativo', true)
             ->whereNotNull('categoria')
             ->groupBy('categoria')
             ->orderByDesc('total')
-            ->limit(6)
+            ->limit(8)
             ->get();
 
         // Ofertas especiais (livros com preço menor)
@@ -53,10 +53,66 @@ class LojaController extends Controller
         return view('loja.index', compact(
             'livrosDestaque',
             'livrosMaisVendidos', 
-            'categoriasPopulares',
+            'livrosPorCategoria',
             'ofertas',
             'estatisticas'
         ));
+    }
+
+    public function catalogo(Request $request)
+    {
+        $query = Livro::where('ativo', true);
+        
+        // Busca por termo
+        if ($request->filled('busca')) {
+            $termo = $request->busca;
+            $query->where(function($q) use ($termo) {
+                $q->where('titulo', 'like', "%{$termo}%")
+                  ->orWhere('autor', 'like', "%{$termo}%")
+                  ->orWhere('categoria', 'like', "%{$termo}%")
+                  ->orWhere('sinopse', 'like', "%{$termo}%");
+            });
+        }
+        
+        // Filtro por categoria
+        if ($request->filled('categoria')) {
+            $query->where('categoria', $request->categoria);
+        }
+        
+        // Filtro por faixa de preço
+        if ($request->filled('preco_min')) {
+            $query->where('preco', '>=', $request->preco_min);
+        }
+        if ($request->filled('preco_max')) {
+            $query->where('preco', '<=', $request->preco_max);
+        }
+        
+        // Filtro por disponibilidade
+        if ($request->filled('disponivel')) {
+            $query->where('estoque', '>', 0);
+        }
+        
+        // Ordenação
+        $orderBy = $request->get('ordem', 'titulo');
+        $direction = $request->get('direcao', 'asc');
+        
+        if ($orderBy === 'popularidade') {
+            $query->inRandomOrder(); // Simular popularidade
+        } else {
+            $query->orderBy($orderBy, $direction);
+        }
+        
+        $livros = $query->paginate(12)->withQueryString();
+        
+        // Dados para filtros
+        $categorias = Livro::select('categoria')
+                          ->whereNotNull('categoria')
+                          ->where('ativo', true)
+                          ->distinct()
+                          ->orderBy('categoria')
+                          ->pluck('categoria');
+        
+        return view('loja.catalogo', compact('livros', 'categorias'));
     }
 
     public function categoria($categoria)
@@ -68,26 +124,6 @@ class LojaController extends Controller
         $totalLivros = $livros->total();
 
         return view('loja.categoria', compact('livros', 'categoria', 'totalLivros'));
-    }
-
-    public function buscar(Request $request)
-    {
-        $termo = $request->get('q');
-        
-        if (empty($termo)) {
-            return redirect()->route('loja.index');
-        }
-
-        $livros = Livro::where('ativo', true)
-            ->where(function($query) use ($termo) {
-                $query->where('titulo', 'like', "%{$termo}%")
-                      ->orWhere('autor', 'like', "%{$termo}%")
-                      ->orWhere('categoria', 'like', "%{$termo}%")
-                      ->orWhere('sinopse', 'like', "%{$termo}%");
-            })
-            ->paginate(12);
-
-        return view('loja.busca', compact('livros', 'termo'));
     }
 
     public function detalhes(Livro $livro)
@@ -120,8 +156,30 @@ class LojaController extends Controller
             return redirect()->route('login');
         }
 
-        $favoritos = auth()->user()->favorites()->where('ativo', true)->paginate(12);
+        $favoritos = auth()->user()->favorites()
+            ->where('ativo', true)
+            ->paginate(12);
 
         return view('loja.favoritos', compact('favoritos'));
+    }
+
+    public function buscar(Request $request)
+    {
+        $termo = $request->get('q');
+        
+        if (empty($termo)) {
+            return redirect()->route('loja.catalogo');
+        }
+
+        $livros = Livro::where('ativo', true)
+            ->where(function($query) use ($termo) {
+                $query->where('titulo', 'like', "%{$termo}%")
+                      ->orWhere('autor', 'like', "%{$termo}%")
+                      ->orWhere('categoria', 'like', "%{$termo}%")
+                      ->orWhere('sinopse', 'like', "%{$termo}%");
+            })
+            ->paginate(12);
+
+        return view('loja.busca', compact('livros', 'termo'));
     }
 }
