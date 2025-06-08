@@ -183,11 +183,7 @@ class LivroController extends Controller
                         ->distinct()
                         ->orderBy('editora')
                         ->pluck('editora');
-        
-        $generos = [
-            'ficcao' => 'Ficção',
-            'nao_ficcao' => 'Não-ficção',
-            'romance' => 'Romance',
+
         $generos = [
             'ficcao' => 'Ficção',
             'nao_ficcao' => 'Não-ficção',
@@ -203,8 +199,8 @@ class LivroController extends Controller
             'jovem_adulto' => 'Jovem Adulto',
             'academico' => 'Acadêmico'
         ];
-        
-        return view('livros.edit', compact('livro', 'categorias', 'editoras', 'generos'));
+
+        return view('livros.create', compact('categorias', 'editoras', 'generos'));
     }
 
     public function update(LivroRequest $request, Livro $livro)

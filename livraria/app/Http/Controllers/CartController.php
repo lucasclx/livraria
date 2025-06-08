@@ -96,7 +96,7 @@ class CartController extends Controller
 
         $cart->update([
             'status' => 'completed',
-            'user_id' => $userId,
+            'user_id' => auth()->id(),
         ]);
         session()->forget('cart_id');
 
