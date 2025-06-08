@@ -49,3 +49,7 @@ php artisan test
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as routing, dependency injection, database ORM and more. The framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## License
+
+This project is licensed under the [MIT License](../LICENSE).
