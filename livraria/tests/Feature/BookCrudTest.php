@@ -25,6 +25,7 @@ class BookCrudTest extends TestCase
             'autor' => 'Author Name',
             'preco' => 19.99,
             'estoque' => 5,
+            'ano_publicacao' => 2020,
         ];
 
         $response = $this->post('/livros', $data);
@@ -49,6 +50,7 @@ class BookCrudTest extends TestCase
             'autor' => 'Auth',
             'preco' => 10,
             'estoque' => 1,
+            'ano_publicacao' => 2000,
         ]);
 
         $response = $this->put("/livros/{$book->id}", [
@@ -70,6 +72,7 @@ class BookCrudTest extends TestCase
             'autor' => 'Auth',
             'preco' => 10,
             'estoque' => 1,
+            'ano_publicacao' => 2000,
         ]);
 
         $response = $this->delete("/livros/{$book->id}");
