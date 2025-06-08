@@ -188,10 +188,6 @@ class LivroController extends Controller
             'ficcao' => 'Ficção',
             'nao_ficcao' => 'Não-ficção',
             'romance' => 'Romance',
-        $generos = [
-            'ficcao' => 'Ficção',
-            'nao_ficcao' => 'Não-ficção',
-            'romance' => 'Romance',
             'fantasia' => 'Fantasia',
             'misterio' => 'Mistério',
             'biografia' => 'Biografia',
@@ -204,7 +200,7 @@ class LivroController extends Controller
             'academico' => 'Acadêmico'
         ];
         
-        return view('livros.edit', compact('livro', 'categorias', 'editoras', 'generos'));
+        return view('livros.create', compact('categorias', 'editoras', 'generos'));
     }
 
     public function update(LivroRequest $request, Livro $livro)
