@@ -422,15 +422,6 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="{{ route('livros.index') }}">
-                        <i class="fas fa-book-open me-1"></i> Catálogo
-                    </a>
-                    <a class="nav-link" href="{{ route('livros.create') }}">
-                        <i class="fas fa-plus-circle me-1"></i> Adicionar Livro
-                    </a>
-                    <a class="nav-link" href="#" onclick="showStats()">
-                        <i class="fas fa-chart-line me-1"></i> Relatórios
-                    </a>
                     <a class="nav-link position-relative" href="{{ route('cart.index') }}">
                         <i class="fas fa-shopping-cart"></i>
                         @php
