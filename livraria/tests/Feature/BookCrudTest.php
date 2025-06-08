@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Livro;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -13,13 +14,19 @@ class BookCrudTest extends TestCase
     /** @test */
     public function index_page_is_accessible(): void
     {
-        $response = $this->get('/livros');
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->get('/admin/livros');
         $response->assertStatus(200);
     }
 
     /** @test */
     public function it_creates_a_book(): void
     {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
         $data = [
             'titulo' => 'Book Title',
             'autor' => 'Author Name',
@@ -28,16 +35,19 @@ class BookCrudTest extends TestCase
             'ano_publicacao' => 2020,
         ];
 
-        $response = $this->post('/livros', $data);
+        $response = $this->post('/admin/livros', $data);
 
-        $response->assertRedirect('/livros');
+        $response->assertRedirect('/admin/livros');
         $this->assertDatabaseHas('livros', ['titulo' => 'Book Title']);
     }
 
     /** @test */
     public function it_validates_book_creation(): void
     {
-        $response = $this->post('/livros', []);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->post('/admin/livros', []);
 
         $response->assertSessionHasErrors(['titulo', 'autor', 'preco', 'estoque']);
     }
@@ -45,6 +55,9 @@ class BookCrudTest extends TestCase
     /** @test */
     public function it_updates_a_book(): void
     {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
         $book = Livro::create([
             'titulo' => 'Old',
             'autor' => 'Auth',
@@ -53,20 +66,23 @@ class BookCrudTest extends TestCase
             'ano_publicacao' => 2000,
         ]);
 
-        $response = $this->put("/livros/{$book->id}", [
+        $response = $this->put("/admin/livros/{$book->id}", [
             'titulo' => 'New',
             'autor' => 'Author',
             'preco' => 12,
             'estoque' => 2,
         ]);
 
-        $response->assertRedirect('/livros');
+        $response->assertRedirect('/admin/livros');
         $this->assertDatabaseHas('livros', ['id' => $book->id, 'titulo' => 'New']);
     }
 
     /** @test */
     public function it_deletes_a_book(): void
     {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
         $book = Livro::create([
             'titulo' => 'Delete',
             'autor' => 'Auth',
@@ -75,9 +91,9 @@ class BookCrudTest extends TestCase
             'ano_publicacao' => 2000,
         ]);
 
-        $response = $this->delete("/livros/{$book->id}");
+        $response = $this->delete("/admin/livros/{$book->id}");
 
-        $response->assertRedirect('/livros');
+        $response->assertRedirect('/admin/livros');
         $this->assertDatabaseMissing('livros', ['id' => $book->id]);
     }
 }
