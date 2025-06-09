@@ -1,276 +1,136 @@
 <?php
-// routes/web.php - Adicionar as novas rotas
 
-// Rotas de Perfil do Usuário
-Route::middleware('auth')->group(function () {
-    Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');
-    Route::get('/perfil/editar', [PerfilController::class, 'editar'])->name('perfil.editar');
-    Route::put('/perfil', [PerfilController::class, 'atualizar'])->name('perfil.atualizar');
-    Route::post('/perfil/alterar-senha', [PerfilController::class, 'alterarSenha'])->name('perfil.alterar-senha');
-    Route::post('/perfil/preferencias', [PerfilController::class, 'salvarPreferencias'])->name('perfil.preferencias');
-    
-    // Subpáginas do perfil
-    Route::get('/perfil/pedidos', [PerfilController::class, 'pedidos'])->name('perfil.pedidos');
-    Route::get('/perfil/favoritos', [PerfilController::class, 'favoritos'])->name('perfil.favoritos');
-    Route::get('/perfil/avaliacoes', [PerfilController::class, 'avaliacoes'])->name('perfil.avaliacoes');
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\AvaliacaoController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LivroController;
+use App\Http\Controllers\LojaController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\RelatorioController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+// Página inicial - redireciona para a loja
+Route::get('/', function () {
+    return redirect()->route('loja.index');
 });
 
-// Rotas de Avaliações
-Route::middleware('auth')->group(function () {
-    Route::post('/livros/{livro}/avaliacoes', [AvaliacaoController::class, 'store'])->name('avaliacoes.store');
-    Route::post('/avaliacoes/{avaliacao}/util', [AvaliacaoController::class, 'marcarUtil'])->name('avaliacoes.util');
+// Rotas de autenticação
+Auth::routes();
+
+// Rota home (dashboard) - com middleware de admin
+Route::get('/home', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
+
+// Rotas da Loja (públicas)
+Route::prefix('loja')->name('loja.')->group(function () {
+    Route::get('/', [LojaController::class, 'index'])->name('index');
+    Route::get('/catalogo', [LojaController::class, 'catalogo'])->name('catalogo');
+    Route::get('/categoria/{categoria}', [LojaController::class, 'categoria'])->name('categoria');
+    Route::get('/livro/{livro}', [LojaController::class, 'detalhes'])->name('detalhes');
+    Route::get('/favoritos', [LojaController::class, 'favoritos'])->name('favoritos');
+    Route::get('/buscar', [LojaController::class, 'buscar'])->name('buscar');
 });
 
-// Rotas de Frete
-Route::group(['prefix' => 'frete'], function () {
-    Route::post('/calcular', [FreteController::class, 'calcular'])->name('frete.calcular');
-    Route::post('/buscar-cep', [FreteController::class, 'buscarCep'])->name('frete.buscar-cep');
-});
-
-// Rotas de Favoritos
+// Rotas de Favoritos (requer autenticação)
 Route::middleware('auth')->group(function () {
     Route::post('/livros/{livro}/favorite', [FavoriteController::class, 'toggle'])->name('livros.favorite');
 });
 
-// app/Models/User.php - Adicionar campos e relacionamentos necessários
+// Rotas de Carrinho
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add/{livro}', [CartController::class, 'add'])->name('add');
+    Route::post('/update/{item}', [CartController::class, 'update'])->name('item.update');
+    Route::post('/remove/{item}', [CartController::class, 'remove'])->name('item.remove');
+    Route::post('/clear', [CartController::class, 'clear'])->name('clear');
+    Route::get('/count', [CartController::class, 'getCartCount'])->name('count');
+});
 
-namespace App\Models;
+// Rotas de Checkout (requer autenticação)
+Route::middleware('auth')->prefix('checkout')->name('checkout.')->group(function () {
+    Route::get('/', [CheckoutController::class, 'index'])->name('index');
+    Route::post('/process', [CheckoutController::class, 'process'])->name('process');
+    Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
+    Route::post('/calculate-shipping', [CheckoutController::class, 'calculateShipping'])->name('calculate-shipping');
+});
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+// Rotas alternativas para checkout (compatibilidade)
+Route::middleware('auth')->group(function () {
+    Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    Route::post('/cart/checkout', [CartController::class, 'processCheckout'])->name('cart.process-checkout');
+});
 
-class User extends Authenticatable
-{
-    use HasFactory, Notifiable;
+// Rotas de Pedidos (requer autenticação)
+Route::middleware('auth')->prefix('orders')->name('orders.')->group(function () {
+    Route::get('/', [OrderController::class, 'index'])->name('index');
+    Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+});
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'telefone',
-        'data_nascimento',
-        'genero',
-        'preferencias',
-        'is_admin',
-    ];
+// Rotas de Perfil do Usuário (requer autenticação)
+Route::middleware('auth')->prefix('perfil')->name('perfil.')->group(function () {
+    Route::get('/', [PerfilController::class, 'index'])->name('index');
+    Route::get('/editar', [PerfilController::class, 'editar'])->name('editar');
+    Route::put('/', [PerfilController::class, 'atualizar'])->name('atualizar');
+    Route::post('/alterar-senha', [PerfilController::class, 'alterarSenha'])->name('alterar-senha');
+    Route::get('/pedidos', [PerfilController::class, 'pedidos'])->name('pedidos');
+    Route::get('/favoritos', [PerfilController::class, 'favoritos'])->name('favoritos');
+    Route::get('/avaliacoes', [PerfilController::class, 'avaliacoes'])->name('avaliacoes');
+});
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+// Rotas de Avaliações (requer autenticação)
+Route::middleware('auth')->group(function () {
+    Route::post('/livros/{livro}/avaliacoes', [AvaliacaoController::class, 'store'])->name('avaliacoes.store');
+    Route::get('/livros/{livro}/avaliacoes', [AvaliacaoController::class, 'index'])->name('avaliacoes.index');
+    Route::post('/avaliacoes/{avaliacao}/util', [AvaliacaoController::class, 'marcarUtil'])->name('avaliacoes.util');
+});
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'data_nascimento' => 'date',
-            'password' => 'hashed',
-            'is_admin' => 'boolean',
-            'preferencias' => 'array',
-        ];
-    }
-
-    // Relacionamentos
-    public function favorites()
-    {
-        return $this->belongsToMany(Livro::class, 'favorites')->withTimestamps();
-    }
-
-    public function avaliacoes()
-    {
-        return $this->hasMany(AvaliacaoLivro::class);
-    }
-
-    public function orders()
-    {
-        return $this->hasMany(Order::class);
-    }
-
-    public function isAdmin()
-    {
-        return $this->is_admin;
-    }
-}
-
-// database/migrations/xxxx_xx_xx_add_fields_to_users_table.php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up()
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('telefone')->nullable()->after('email');
-            $table->date('data_nascimento')->nullable()->after('telefone');
-            $table->enum('genero', ['masculino', 'feminino', 'outro', 'prefiro_nao_informar'])->nullable()->after('data_nascimento');
-            $table->json('preferencias')->nullable()->after('genero');
-        });
-    }
-
-    public function down()
-    {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['telefone', 'data_nascimento', 'genero', 'preferencias']);
-        });
-    }
-};
-
-// app/Http/Controllers/PerfilController.php - Métodos adicionais
-
-public function salvarPreferencias(Request $request)
-{
-    $user = Auth::user();
+// Rotas Administrativas (requer autenticação e permissão de admin)
+Route::middleware(['auth', 'admin'])->group(function () {
     
-    $preferencias = [
-        'email_promocoes' => $request->boolean('email_promocoes'),
-        'email_novidades' => $request->boolean('email_novidades'),
-        'email_pedidos' => $request->boolean('email_pedidos'),
-        'perfil_publico' => $request->boolean('perfil_publico'),
-        'mostrar_nome' => $request->boolean('mostrar_nome'),
-    ];
+    // Rotas de Livros (CRUD)
+    Route::resource('livros', LivroController::class);
+    Route::get('/livros/{livro}/delete', [LivroController::class, 'confirmDelete'])->name('livros.delete');
     
-    $user->update(['preferencias' => $preferencias]);
+    // API para busca de livros
+    Route::get('/api/livros/search', [LivroController::class, 'searchApi'])->name('livros.search.api');
     
-    return redirect()->back()->with('success', 'Preferências salvas com sucesso!');
-}
-
-// resources/views/loja/detalhes.blade.php - Integrar calculadora de frete
-// Adicionar após a seção de preço (cerca da linha 150):
-
-<!-- Calculadora de Frete -->
-@include('components.calculadora-frete')
-
-// app/Http/Controllers/AvaliacaoController.php - Método para marcar como útil
-
-public function marcarUtil(Request $request, AvaliacaoLivro $avaliacao)
-{
-    $request->validate([
-        'util' => 'required|boolean'
-    ]);
+    // Rotas de Categorias (CRUD)
+    Route::resource('categorias', CategoriaController::class);
+    Route::get('/categorias/{categoria}/delete', [CategoriaController::class, 'confirmDelete'])->name('categorias.delete');
     
-    if ($request->util) {
-        $avaliacao->increment('util_positivo');
-    } else {
-        $avaliacao->increment('util_negativo');
-    }
-    
-    return response()->json(['success' => true]);
-}
+    // Rotas de Relatórios
+    Route::prefix('relatorios')->name('relatorios.')->group(function () {
+        Route::get('/', [RelatorioController::class, 'index'])->name('index');
+        Route::get('/vendas', [RelatorioController::class, 'vendas'])->name('vendas');
+        Route::get('/estoque', [RelatorioController::class, 'estoque'])->name('estoque');
+        Route::get('/categorias', [RelatorioController::class, 'categorias'])->name('categorias');
+    });
+});
 
-// resources/views/components/navegacao-perfil.blade.php - Menu lateral do perfil
+// Middleware personalizado para admin
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin', function () {
+        if (!auth()->user()->is_admin) {
+            abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
+        }
+        return redirect()->route('dashboard');
+    })->name('admin');
+});
 
-<div class="card">
-    <div class="card-header">
-        <h6 class="mb-0">
-            <i class="fas fa-user me-2"></i>Minha Conta
-        </h6>
-    </div>
-    <div class="list-group list-group-flush">
-        <a href="{{ route('perfil.index') }}" 
-           class="list-group-item list-group-item-action {{ request()->routeIs('perfil.index') ? 'active' : '' }}">
-            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-        </a>
-        <a href="{{ route('perfil.editar') }}" 
-           class="list-group-item list-group-item-action {{ request()->routeIs('perfil.editar') ? 'active' : '' }}">
-            <i class="fas fa-edit me-2"></i>Editar Perfil
-        </a>
-        <a href="{{ route('perfil.pedidos') }}" 
-           class="list-group-item list-group-item-action {{ request()->routeIs('perfil.pedidos') ? 'active' : '' }}">
-            <i class="fas fa-shopping-bag me-2"></i>Meus Pedidos
-        </a>
-        <a href="{{ route('perfil.favoritos') }}" 
-           class="list-group-item list-group-item-action {{ request()->routeIs('perfil.favoritos') ? 'active' : '' }}">
-            <i class="fas fa-heart me-2"></i>Favoritos
-        </a>
-        <a href="{{ route('perfil.avaliacoes') }}" 
-           class="list-group-item list-group-item-action {{ request()->routeIs('perfil.avaliacoes') ? 'active' : '' }}">
-            <i class="fas fa-star me-2"></i>Minhas Avaliações
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="{{ route('logout') }}" 
-           class="list-group-item list-group-item-action text-danger"
-           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-            <i class="fas fa-sign-out-alt me-2"></i>Sair
-        </a>
-    </div>
-</div>
+// Rotas de fallback para compatibilidade
+Route::get('/carrinho', function () {
+    return redirect()->route('cart.index');
+})->name('carrinho');
 
-// config/app.php - Adicionar configuração de CEP de origem
-
-'cep_origem' => env('CEP_ORIGEM', '01001-000'),
-
-// .env - Adicionar variáveis de ambiente
-
-# Frete
-CEP_ORIGEM=01001-000
-
-# APIs externas
-VIACEP_URL=https://viacep.com.br/ws/
-CORREIOS_API_URL=https://api.correios.com.br/
-
-// resources/views/layouts/app.blade.php - Atualizar navegação
-
-<!-- No navbar, adicionar link para perfil: -->
-@auth
-<div class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-        <i class="fas fa-user-circle me-1"></i>{{ Auth::user()->name }}
-    </a>
-    <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="{{ route('perfil.index') }}">
-            <i class="fas fa-user me-2"></i>Meu Perfil
-        </a></li>
-        <li><a class="dropdown-item" href="{{ route('perfil.pedidos') }}">
-            <i class="fas fa-shopping-bag me-2"></i>Meus Pedidos
-        </a></li>
-        <li><a class="dropdown-item" href="{{ route('perfil.favoritos') }}">
-            <i class="fas fa-heart me-2"></i>Favoritos
-        </a></li>
-        <li><hr class="dropdown-divider"></li>
-        <li>
-            <a class="dropdown-item" href="{{ route('logout') }}"
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fas fa-sign-out-alt me-2"></i>Sair
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                @csrf
-            </form>
-        </li>
-    </ul>
-</div>
-@endauth
-
-// composer.json - Adicionar dependência do Guzzle
-
-"require": {
-    "guzzlehttp/guzzle": "^7.0"
-}
-
-// Para instalar execute: composer install
-
-// app/Providers/AppServiceProvider.php - Registrar serviços
-
-public function register(): void
-{
-    $this->app->singleton(FreteService::class);
-}
-
-// resources/views/loja/detalhes.blade.php - Adicionar na aba de especificações
-
-@if($livro->peso)
-<div class="spec-item">
-    <span><i class="fas fa-weight-hanging me-2"></i>Peso:</span>
-    <strong>{{ number_format($livro->peso, 3) }}kg</strong>
-</div>
-@endif
-
-@if($livro->dimensoes)
-<div class="spec-item">
-    <span><i class="fas fa-ruler me-2"></i>Dimensões:</span>
-    <strong>{{ $livro->dimensoes }}</strong>
-</div>
-@endif
+Route::get('/checkout', function () {
+    return redirect()->route('checkout.index');
+})->middleware('auth');
