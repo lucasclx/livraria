@@ -1,5 +1,4 @@
 <?php
-// database/migrations/2025_06_25_000001_fix_livros_categoria_relationship.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

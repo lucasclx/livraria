@@ -72,15 +72,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Criar tabela de wishlist
-        Schema::create('wishlist', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('livro_id')->constrained('livros')->onDelete('cascade');
-            $table->timestamps();
-
-            $table->unique(['user_id', 'livro_id']);
-        });
 
         // Atualizar tabela orders
         Schema::table('orders', function (Blueprint $table) {
@@ -95,7 +86,6 @@ return new class extends Migration
     public function down()
     {
         Schema::dropIfExists('cupons_utilizados');
-        Schema::dropIfExists('wishlist');
         Schema::dropIfExists('cupons');
         Schema::dropIfExists('avaliacoes_livros');
         
