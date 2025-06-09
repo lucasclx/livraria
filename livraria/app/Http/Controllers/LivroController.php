@@ -88,39 +88,34 @@ class LivroController extends Controller
         return view('livros.create', compact('categorias', 'editoras'));
     }
 
-    public function store($request)
+    public function store(Request $request)
     {
         $this->checkAdmin();
         
-        // Se não é uma instância de LivroRequest, validar manualmente
-        if (!$request instanceof \App\Http\Requests\LivroRequest) {
-            $data = $request->validate([
-                'titulo' => 'required|string|max:255',
-                'autor' => 'required|string|max:100',
-                'isbn' => 'nullable|string|max:20|unique:livros',
-                'preco' => 'required|numeric|min:0.01|max:99999.99',
-                'preco_promocional' => 'nullable|numeric|min:0.01|max:99999.99|lt:preco',
-                'editora' => 'nullable|string|max:100',
-                'ano_publicacao' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
-                'paginas' => 'nullable|integer|min:1|max:99999',
-                'categoria_id' => 'nullable|exists:categorias,id',
-                'estoque' => 'required|integer|min:0|max:99999',
-                'estoque_minimo' => 'nullable|integer|min:0|max:9999',
-                'peso' => 'nullable|numeric|min:0.001|max:99.999',
-                'dimensoes' => 'nullable|string|max:50',
-                'idioma' => 'nullable|string|max:50',
-                'edicao' => 'nullable|string|max:50',
-                'encadernacao' => 'nullable|string|max:50',
-                'sinopse' => 'nullable|string|max:2000',
-                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-                'ativo' => 'boolean',
-                'destaque' => 'boolean',
-                'promocao_inicio' => 'nullable|date|before_or_equal:promocao_fim',
-                'promocao_fim' => 'nullable|date|after_or_equal:promocao_inicio',
-            ]);
-        } else {
-            $data = $request->validated();
-        }
+        $data = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'autor' => 'required|string|max:100',
+            'isbn' => 'nullable|string|max:20|unique:livros',
+            'preco' => 'required|numeric|min:0.01|max:99999.99',
+            'preco_promocional' => 'nullable|numeric|min:0.01|max:99999.99|lt:preco',
+            'editora' => 'nullable|string|max:100',
+            'ano_publicacao' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
+            'paginas' => 'nullable|integer|min:1|max:99999',
+            'categoria_id' => 'nullable|exists:categorias,id',
+            'estoque' => 'required|integer|min:0|max:99999',
+            'estoque_minimo' => 'nullable|integer|min:0|max:9999',
+            'peso' => 'nullable|numeric|min:0.001|max:99.999',
+            'dimensoes' => 'nullable|string|max:50',
+            'idioma' => 'nullable|string|max:50',
+            'edicao' => 'nullable|string|max:50',
+            'encadernacao' => 'nullable|string|max:50',
+            'sinopse' => 'nullable|string|max:2000',
+            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'ativo' => 'boolean',
+            'destaque' => 'boolean',
+            'promocao_inicio' => 'nullable|date|before_or_equal:promocao_fim',
+            'promocao_fim' => 'nullable|date|after_or_equal:promocao_inicio',
+        ]);
 
         // Handle image upload
         if ($request->hasFile('imagem')) {
@@ -148,6 +143,11 @@ class LivroController extends Controller
         // Converter checkbox values
         $data['ativo'] = $request->has('ativo') ? true : false;
         $data['destaque'] = $request->has('destaque') ? true : false;
+
+        // Definir valores padrão se não informados
+        $data['estoque_minimo'] = $data['estoque_minimo'] ?? 5;
+        $data['peso'] = $data['peso'] ?? 0.5;
+        $data['idioma'] = $data['idioma'] ?? 'Português';
 
         try {
             Livro::create($data);
@@ -186,39 +186,34 @@ class LivroController extends Controller
         return view('livros.edit', compact('livro', 'categorias', 'editoras'));
     }
 
-    public function update($request, Livro $livro)
+    public function update(Request $request, Livro $livro)
     {
         $this->checkAdmin();
         
-        // Se não é uma instância de LivroRequest, validar manualmente
-        if (!$request instanceof \App\Http\Requests\LivroRequest) {
-            $data = $request->validate([
-                'titulo' => 'required|string|max:255',
-                'autor' => 'required|string|max:100',
-                'isbn' => 'nullable|string|max:20|unique:livros,isbn,' . $livro->id,
-                'preco' => 'required|numeric|min:0.01|max:99999.99',
-                'preco_promocional' => 'nullable|numeric|min:0.01|max:99999.99|lt:preco',
-                'editora' => 'nullable|string|max:100',
-                'ano_publicacao' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
-                'paginas' => 'nullable|integer|min:1|max:99999',
-                'categoria_id' => 'nullable|exists:categorias,id',
-                'estoque' => 'required|integer|min:0|max:99999',
-                'estoque_minimo' => 'nullable|integer|min:0|max:9999',
-                'peso' => 'nullable|numeric|min:0.001|max:99.999',
-                'dimensoes' => 'nullable|string|max:50',
-                'idioma' => 'nullable|string|max:50',
-                'edicao' => 'nullable|string|max:50',
-                'encadernacao' => 'nullable|string|max:50',
-                'sinopse' => 'nullable|string|max:2000',
-                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-                'ativo' => 'boolean',
-                'destaque' => 'boolean',
-                'promocao_inicio' => 'nullable|date|before_or_equal:promocao_fim',
-                'promocao_fim' => 'nullable|date|after_or_equal:promocao_inicio',
-            ]);
-        } else {
-            $data = $request->validated();
-        }
+        $data = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'autor' => 'required|string|max:100',
+            'isbn' => 'nullable|string|max:20|unique:livros,isbn,' . $livro->id,
+            'preco' => 'required|numeric|min:0.01|max:99999.99',
+            'preco_promocional' => 'nullable|numeric|min:0.01|max:99999.99|lt:preco',
+            'editora' => 'nullable|string|max:100',
+            'ano_publicacao' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
+            'paginas' => 'nullable|integer|min:1|max:99999',
+            'categoria_id' => 'nullable|exists:categorias,id',
+            'estoque' => 'required|integer|min:0|max:99999',
+            'estoque_minimo' => 'nullable|integer|min:0|max:9999',
+            'peso' => 'nullable|numeric|min:0.001|max:99.999',
+            'dimensoes' => 'nullable|string|max:50',
+            'idioma' => 'nullable|string|max:50',
+            'edicao' => 'nullable|string|max:50',
+            'encadernacao' => 'nullable|string|max:50',
+            'sinopse' => 'nullable|string|max:2000',
+            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'ativo' => 'boolean',
+            'destaque' => 'boolean',
+            'promocao_inicio' => 'nullable|date|before_or_equal:promocao_fim',
+            'promocao_fim' => 'nullable|date|after_or_equal:promocao_inicio',
+        ]);
 
         // Handle image upload
         if ($request->hasFile('imagem')) {

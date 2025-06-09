@@ -37,21 +37,16 @@ class CategoriaController extends Controller
         return view('categorias.create');
     }
 
-    public function store($request)
+    public function store(Request $request)
     {
         $this->checkAdmin();
         
-        // Se não é uma instância de CategoriaRequest, validar manualmente
-        if (!$request instanceof \App\Http\Requests\CategoriaRequest) {
-            $data = $request->validate([
-                'nome' => 'required|string|min:3|max:100',
-                'descricao' => 'nullable|string|max:500',
-                'ativo' => 'boolean',
-                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
-        } else {
-            $data = $request->validated();
-        }
+        $data = $request->validate([
+            'nome' => 'required|string|min:3|max:100',
+            'descricao' => 'nullable|string|max:500',
+            'ativo' => 'boolean',
+            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
         if ($request->hasFile('imagem')) {
             $imagem = $request->file('imagem');
@@ -62,6 +57,9 @@ class CategoriaController extends Controller
 
         // Converter checkbox
         $data['ativo'] = $request->has('ativo') ? true : false;
+        
+        // Gerar slug automaticamente
+        $data['slug'] = Str::slug($data['nome']);
 
         Categoria::create($data);
 
@@ -83,21 +81,16 @@ class CategoriaController extends Controller
         return view('categorias.edit', compact('categoria'));
     }
 
-    public function update($request, Categoria $categoria)
+    public function update(Request $request, Categoria $categoria)
     {
         $this->checkAdmin();
         
-        // Se não é uma instância de CategoriaRequest, validar manualmente
-        if (!$request instanceof \App\Http\Requests\CategoriaRequest) {
-            $data = $request->validate([
-                'nome' => 'required|string|min:3|max:100',
-                'descricao' => 'nullable|string|max:500',
-                'ativo' => 'boolean',
-                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
-        } else {
-            $data = $request->validated();
-        }
+        $data = $request->validate([
+            'nome' => 'required|string|min:3|max:100',
+            'descricao' => 'nullable|string|max:500',
+            'ativo' => 'boolean',
+            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
         if ($request->hasFile('imagem')) {
             // Remove imagem antiga
@@ -113,6 +106,11 @@ class CategoriaController extends Controller
 
         // Converter checkbox
         $data['ativo'] = $request->has('ativo') ? true : false;
+        
+        // Atualizar slug se nome mudou
+        if ($data['nome'] !== $categoria->nome) {
+            $data['slug'] = Str::slug($data['nome']);
+        }
 
         $categoria->update($data);
 

@@ -299,15 +299,41 @@ return [
     */
 
   'menu' => [
+    // Dashboard
     [
         'text' => 'Dashboard',
         'url' => 'home',
         'icon' => 'fas fa-tachometer-alt',
+        'can' => 'admin',
     ],
+    
+    // Separador
+    ['header' => 'GESTÃO DE PRODUTOS'],
+    
+    // Livros
+    [
+        'text' => 'Livros',
+        'icon' => 'fas fa-book',
+        'can' => 'admin',
+        'submenu' => [
+            [
+                'text' => 'Listar Livros',
+                'url' => 'livros',
+                'icon' => 'fas fa-list',
+            ],
+            [
+                'text' => 'Novo Livro',
+                'url' => 'livros/create',
+                'icon' => 'fas fa-plus',
+            ],
+        ],
+    ],
+    
+    // Categorias
     [
         'text' => 'Categorias',
-        'url' => 'categorias',
         'icon' => 'fas fa-tags',
+        'can' => 'admin',
         'submenu' => [
             [
                 'text' => 'Listar Categorias',
@@ -321,22 +347,53 @@ return [
             ],
         ],
     ],
+    
+    // Separador
+    ['header' => 'RELATÓRIOS'],
+    
+    // Relatórios
     [
-        'text' => 'Livros',
-        'url' => 'livros',
-        'icon' => 'fas fa-book',
+        'text' => 'Relatórios',
+        'icon' => 'fas fa-chart-bar',
+        'can' => 'admin',
         'submenu' => [
             [
-                'text' => 'Listar Livros',
-                'url' => 'livros',
-                'icon' => 'fas fa-list',
+                'text' => 'Dashboard Geral',
+                'url' => 'relatorios',
+                'icon' => 'fas fa-chart-line',
             ],
             [
-                'text' => 'Novo Livro',
-                'url' => 'livros/create',
-                'icon' => 'fas fa-plus',
+                'text' => 'Vendas',
+                'url' => 'relatorios/vendas',
+                'icon' => 'fas fa-shopping-cart',
+            ],
+            [
+                'text' => 'Estoque',
+                'url' => 'relatorios/estoque',
+                'icon' => 'fas fa-boxes',
+            ],
+            [
+                'text' => 'Por Categoria',
+                'url' => 'relatorios/categorias',
+                'icon' => 'fas fa-layer-group',
             ],
         ],
+    ],
+    
+    // Separador
+    ['header' => 'LOJA'],
+    
+    // Links para a loja
+    [
+        'text' => 'Ver Loja',
+        'url' => '/',
+        'icon' => 'fas fa-store',
+        'target' => '_blank',
+    ],
+    [
+        'text' => 'Meu Perfil',
+        'url' => 'perfil',
+        'icon' => 'fas fa-user',
     ],
 ],
     /*

@@ -17,12 +17,24 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        // Verificar se está autenticado
         if (!Auth::check()) {
-            return redirect()->route('login');
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+            return redirect()->route('login')
+                ->with('error', 'Você precisa estar logado para acessar esta área.');
         }
 
+        // Verificar se é admin
         if (!Auth::user()->is_admin) {
-            abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Forbidden.'], 403);
+            }
+            
+            // Se não for admin, redirecionar para a loja
+            return redirect()->route('loja.index')
+                ->with('error', 'Acesso negado. Apenas administradores podem acessar esta área.');
         }
 
         return $next($request);

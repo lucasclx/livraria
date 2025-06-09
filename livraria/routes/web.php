@@ -28,7 +28,7 @@ Route::get('/', function () {
 Auth::routes();
 
 // Rota home (dashboard) - apenas auth, verificação de admin será no controller
-Route::get('/home', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
+Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('auth');
 
 // Rotas da Loja (públicas)
 Route::prefix('loja')->name('loja.')->group(function () {
@@ -36,7 +36,7 @@ Route::prefix('loja')->name('loja.')->group(function () {
     Route::get('/catalogo', [LojaController::class, 'catalogo'])->name('catalogo');
     Route::get('/categoria/{categoria}', [LojaController::class, 'categoria'])->name('categoria');
     Route::get('/livro/{livro}', [LojaController::class, 'detalhes'])->name('detalhes');
-    Route::get('/favoritos', [LojaController::class, 'favoritos'])->name('favoritos');
+    Route::get('/favoritos', [LojaController::class, 'favoritos'])->name('favoritos')->middleware('auth');
     Route::get('/buscar', [LojaController::class, 'buscar'])->name('buscar');
 });
 
@@ -55,25 +55,10 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/count', [CartController::class, 'getCartCount'])->name('count');
 });
 
-// Rotas de Checkout (requer autenticação) - CORRIGIDO
+// Rotas de Checkout (requer autenticação)
 Route::middleware('auth')->group(function () {
-    // Rota principal de checkout
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
     Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
-    
-    // Rotas alternativas para compatibilidade
-    Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
-    Route::post('/cart/checkout', [CartController::class, 'processCheckout'])->name('cart.process-checkout');
-    
-    // Se você quiser usar um CheckoutController dedicado no futuro, pode descomentar estas rotas:
-    /*
-    Route::prefix('checkout')->name('checkout.')->group(function () {
-        Route::get('/', [CheckoutController::class, 'index'])->name('index');
-        Route::post('/process', [CheckoutController::class, 'process'])->name('process');
-        Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
-        Route::post('/calculate-shipping', [CheckoutController::class, 'calculateShipping'])->name('calculate-shipping');
-    });
-    */
 });
 
 // Rotas de Pedidos (requer autenticação)
@@ -103,6 +88,14 @@ Route::middleware('auth')->group(function () {
 // Rotas Administrativas (apenas auth, verificação de admin será no controller)
 Route::middleware('auth')->group(function () {
     
+    // Dashboard administrativo
+    Route::get('/admin', function () {
+        if (!auth()->user()->is_admin) {
+            abort(403, 'Acesso negado.');
+        }
+        return redirect()->route('home');
+    })->name('admin');
+    
     // Rotas de Livros (CRUD)
     Route::resource('livros', LivroController::class);
     Route::get('/livros/{livro}/delete', [LivroController::class, 'confirmDelete'])->name('livros.delete');
@@ -123,34 +116,16 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// Rota admin alternativa
-Route::get('/admin', function () {
-    if (!auth()->check()) {
-        return redirect()->route('login');
-    }
-    if (!auth()->user()->is_admin) {
-        abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
-    }
-    return redirect()->route('dashboard');
-})->name('admin')->middleware('auth');
-
-// Rotas de fallback para compatibilidade
+// Rotas de compatibilidade/redirecionamento
 Route::get('/carrinho', function () {
     return redirect()->route('cart.index');
 })->name('carrinho');
 
-// Verificar todas as rotas definidas (apenas para debug - remover em produção)
-// Route::get('/debug-routes', function () {
-//     $routes = collect(Route::getRoutes())->map(function ($route) {
-//         return [
-//             'uri' => $route->uri(),
-//             'name' => $route->getName(),
-//             'action' => $route->getAction()['controller'] ?? 'Closure'
-//         ];
-//     });
-//     return response()->json($routes);
-// });
+Route::get('/dashboard', function () {
+    return redirect()->route('home');
+})->name('dashboard');
 
+// Rota de debug para categorias (remover em produção)
 Route::get('/debug-categorias', function () {
     $categorias = \App\Models\Categoria::has('livros')->withCount('livros')->get();
     return response()->json($categorias);
