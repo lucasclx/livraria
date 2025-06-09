@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
 use App\Services\PaymentService;
 use App\Services\FakePaymentService;
+use App\Services\StockService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PaymentService::class, FakePaymentService::class);
+        $this->app->singleton(StockService::class);
     }
 
     /**

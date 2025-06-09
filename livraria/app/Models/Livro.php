@@ -36,7 +36,9 @@ class Livro extends Model
         'destaque',
         'vendas_total',
         'avaliacao_media',
-        'total_avaliacoes'
+        'total_avaliacoes',
+        'promocao_inicio',
+        'promocao_fim',
     ];
 
     protected $casts = [
@@ -52,7 +54,9 @@ class Livro extends Model
         'vendas_total' => 'integer',
         'avaliacao_media' => 'decimal:2',
         'total_avaliacoes' => 'integer',
-        'galeria_imagens' => 'array'
+        'galeria_imagens' => 'array',
+        'promocao_inicio' => 'datetime',
+        'promocao_fim' => 'datetime',
     ];
 
     // Relacionamentos
@@ -76,15 +80,18 @@ class Livro extends Model
         return $this->hasMany(CartItem::class);
     }
 
-    public function vendas()
+    public function stockMovements()
     {
-        return $this->hasMany(ItemPedido::class);
+        return $this->hasMany(StockMovement::class);
     }
 
     // Accessors
     public function getPrecoFinalAttribute()
     {
-        return $this->preco_promocional ?? $this->preco;
+        if ($this->tem_promocao) {
+            return $this->preco_promocional;
+        }
+        return $this->preco;
     }
 
     public function getPrecoFormatadoAttribute()
@@ -94,7 +101,14 @@ class Livro extends Model
 
     public function getTemPromocaoAttribute()
     {
-        return !is_null($this->preco_promocional) && $this->preco_promocional < $this->preco;
+        if (!$this->preco_promocional) return false;
+        if ($this->preco_promocional >= $this->preco) return false;
+        
+        $now = now();
+        if ($this->promocao_inicio && $now < $this->promocao_inicio) return false;
+        if ($this->promocao_fim && $now > $this->promocao_fim) return false;
+        
+        return true;
     }
 
     public function getDesconto()
@@ -113,18 +127,6 @@ class Livro extends Model
         return $this->getPlaceholderImage();
     }
 
-    public function getGaleriaUrlsAttribute()
-    {
-        if (!$this->galeria_imagens) return [];
-        
-        return collect($this->galeria_imagens)->map(function ($imagem) {
-            if (Storage::disk('public')->exists('livros/galeria/' . $imagem)) {
-                return url('storage/livros/galeria/' . $imagem);
-            }
-            return null;
-        })->filter()->values()->toArray();
-    }
-
     public function getStatusEstoqueAttribute()
     {
         if ($this->estoque == 0) {
@@ -134,15 +136,6 @@ class Livro extends Model
         } else {
             return ['status' => 'disponivel', 'cor' => 'success', 'texto' => 'Disponível'];
         }
-    }
-
-    public function getClassificacaoAttribute()
-    {
-        if ($this->avaliacao_media >= 4.5) return 'Excelente';
-        if ($this->avaliacao_media >= 4.0) return 'Muito Bom';
-        if ($this->avaliacao_media >= 3.0) return 'Bom';
-        if ($this->avaliacao_media >= 2.0) return 'Regular';
-        return 'Baixo';
     }
 
     // Scopes
@@ -156,6 +149,12 @@ class Livro extends Model
         return $query->where('estoque', '>', 0);
     }
 
+    public function scopeEstoqueBaixo(Builder $query)
+    {
+        return $query->whereColumn('estoque', '<=', 'estoque_minimo')
+                    ->where('estoque', '>', 0);
+    }
+
     public function scopeDestaque(Builder $query)
     {
         return $query->where('destaque', true);
@@ -163,19 +162,17 @@ class Livro extends Model
 
     public function scopePromocao(Builder $query)
     {
+        $now = now();
         return $query->whereNotNull('preco_promocional')
-                    ->whereColumn('preco_promocional', '<', 'preco');
-    }
-
-    public function scopeMaisVendidos(Builder $query, $limit = 10)
-    {
-        return $query->orderByDesc('vendas_total')->limit($limit);
-    }
-
-    public function scopeMelhoresAvaliados(Builder $query, $minAvaliacoes = 5)
-    {
-        return $query->where('total_avaliacoes', '>=', $minAvaliacoes)
-                    ->orderByDesc('avaliacao_media');
+                    ->whereColumn('preco_promocional', '<', 'preco')
+                    ->where(function($q) use ($now) {
+                        $q->whereNull('promocao_inicio')
+                          ->orWhere('promocao_inicio', '<=', $now);
+                    })
+                    ->where(function($q) use ($now) {
+                        $q->whereNull('promocao_fim')
+                          ->orWhere('promocao_fim', '>=', $now);
+                    });
     }
 
     public function scopeBuscar(Builder $query, $termo)
@@ -185,48 +182,55 @@ class Livro extends Model
               ->orWhere('autor', 'like', "%{$termo}%")
               ->orWhere('isbn', 'like', "%{$termo}%")
               ->orWhere('editora', 'like', "%{$termo}%")
-              ->orWhere('sinopse', 'like', "%{$termo}%");
+              ->orWhere('sinopse', 'like', "%{$termo}%")
+              ->orWhereHas('categoria', function($query) use ($termo) {
+                  $query->where('nome', 'like', "%{$termo}%");
+              });
         });
     }
 
-    public function scopePorPreco(Builder $query, $min = null, $max = null)
+    public function scopePorCategoria(Builder $query, $categoriaId)
     {
-        if ($min) {
-            $query->where(function ($q) use ($min) {
-                $q->where('preco_promocional', '>=', $min)
-                  ->orWhere(function ($q2) use ($min) {
-                      $q2->whereNull('preco_promocional')
-                         ->where('preco', '>=', $min);
-                  });
-            });
-        }
-
-        if ($max) {
-            $query->where(function ($q) use ($max) {
-                $q->where('preco_promocional', '<=', $max)
-                  ->orWhere(function ($q2) use ($max) {
-                      $q2->whereNull('preco_promocional')
-                         ->where('preco', '<=', $max);
-                  });
-            });
-        }
-
-        return $query;
+        return $query->where('categoria_id', $categoriaId);
     }
 
     // Métodos de negócio
-    public function diminuirEstoque($quantidade = 1)
+    public function diminuirEstoque($quantidade = 1, $motivo = 'venda', $referencia = null)
     {
         if ($this->estoque >= $quantidade) {
+            $estoqueAnterior = $this->estoque;
             $this->decrement('estoque', $quantidade);
+            
+            // Registrar movimento de estoque
+            $this->stockMovements()->create([
+                'type' => $motivo,
+                'quantity_before' => $estoqueAnterior,
+                'quantity_change' => -$quantidade,
+                'quantity_after' => $this->estoque,
+                'reference_type' => $referencia ? get_class($referencia) : null,
+                'reference_id' => $referencia?->id,
+            ]);
+            
             return true;
         }
         return false;
     }
 
-    public function aumentarEstoque($quantidade = 1)
+    public function aumentarEstoque($quantidade = 1, $motivo = 'reposicao', $referencia = null)
     {
+        $estoqueAnterior = $this->estoque;
         $this->increment('estoque', $quantidade);
+        
+        // Registrar movimento de estoque
+        $this->stockMovements()->create([
+            'type' => $motivo,
+            'quantity_before' => $estoqueAnterior,
+            'quantity_change' => $quantidade,
+            'quantity_after' => $this->estoque,
+            'reference_type' => $referencia ? get_class($referencia) : null,
+            'reference_id' => $referencia?->id,
+        ]);
+        
         return true;
     }
 

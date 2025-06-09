@@ -20,7 +20,7 @@ class CartController extends Controller
     public function index()
     {
         $cart = $this->getCart();
-        $items = $cart?->items()->with('livro')->get() ?? collect();
+        $items = $cart?->items()->with('livro.categoria')->get() ?? collect();
         $total = $items->sum(fn ($item) => $item->price * $item->quantity);
         $itemCount = $items->sum('quantity');
 
@@ -64,7 +64,7 @@ class CartController extends Controller
                     $cart->items()->create([
                         'livro_id' => $livro->id,
                         'quantity' => $quantity,
-                        'price' => $livro->preco,
+                        'price' => $livro->preco_final,
                     ]);
                 }
             });
@@ -73,44 +73,6 @@ class CartController extends Controller
             
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
-        }
-    }
-
-    public function quickAdd(Request $request, Livro $livro)
-    {
-        // Para requisições AJAX
-        if (!$livro->ativo || $livro->estoque < 1) {
-            return response()->json(['success' => false, 'message' => 'Produto indisponível'], 400);
-        }
-
-        $cart = $this->getOrCreateCart();
-        
-        try {
-            $item = $cart->items()->where('livro_id', $livro->id)->first();
-            
-            if ($item) {
-                if ($item->quantity >= $livro->estoque) {
-                    return response()->json(['success' => false, 'message' => 'Quantidade máxima atingida'], 400);
-                }
-                $item->increment('quantity');
-            } else {
-                $cart->items()->create([
-                    'livro_id' => $livro->id,
-                    'quantity' => 1,
-                    'price' => $livro->preco,
-                ]);
-            }
-
-            $cartCount = $cart->items()->sum('quantity');
-            
-            return response()->json([
-                'success' => true, 
-                'message' => 'Adicionado ao carrinho!',
-                'cart_count' => $cartCount
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Erro interno'], 500);
         }
     }
 
@@ -170,12 +132,11 @@ class CartController extends Controller
 
         $items = $cart->items()->with('livro')->get();
         
-        // Verificar disponibilidade de todos os itens
-        foreach ($items as $item) {
-            if (!$item->livro->ativo || $item->livro->estoque < $item->quantity) {
-                return redirect()->route('cart.index')->with('error', 
-                    "O livro '{$item->livro->titulo}' não está mais disponível na quantidade solicitada.");
-            }
+        // Validar estoque de todos os itens
+        $stockErrors = $this->validateCartStock($cart);
+        if (!empty($stockErrors)) {
+            return redirect()->route('cart.index')->with('error', 
+                'Alguns itens não estão mais disponíveis: ' . implode(', ', $stockErrors));
         }
 
         $total = $items->sum(fn ($item) => $item->price * $item->quantity);
@@ -202,12 +163,18 @@ class CartController extends Controller
         ]);
 
         try {
-            DB::transaction(function() use ($cart, $data) {
+            return DB::transaction(function() use ($cart, $data) {
                 $items = $cart->items()->with('livro')->get();
                 
-                // Verificar estoque novamente
+                // Validar estoque novamente
+                $stockErrors = $this->validateCartStock($cart);
+                if (!empty($stockErrors)) {
+                    throw new \Exception('Estoque insuficiente: ' . implode(', ', $stockErrors));
+                }
+
+                // Reservar estoque
                 foreach ($items as $item) {
-                    if ($item->livro->estoque < $item->quantity) {
+                    if (!$item->livro->diminuirEstoque($item->quantity, 'reserva_venda')) {
                         throw new \Exception("Estoque insuficiente para {$item->livro->titulo}");
                     }
                 }
@@ -221,28 +188,38 @@ class CartController extends Controller
                     'user_id' => auth()->id(),
                     'total' => $total + $shipping,
                     'shipping_cost' => $shipping,
-                    'status' => 'pending',
+                    'status' => 'pending_payment',
                 ]));
 
-                // Atualizar estoque (simulação)
-                foreach ($items as $item) {
-                    $item->livro->decrement('estoque', $item->quantity);
+                // Processar pagamento (simulado)
+                $paymentSuccess = $this->processPayment($order, $data['payment_method']);
+                
+                if ($paymentSuccess) {
+                    // Confirmar venda - estoque já foi diminuído
+                    foreach ($items as $item) {
+                        $item->livro->adicionarVenda($item->quantity);
+                    }
+                    
+                    $order->update(['status' => 'confirmed']);
+                    $cart->update(['status' => 'completed', 'user_id' => auth()->id()]);
+                    
+                    session()->forget('cart_id');
+                    
+                    return redirect()->route('orders.index')->with('success', 'Pedido realizado com sucesso!');
+                } else {
+                    // Reverter estoque em caso de falha no pagamento
+                    foreach ($items as $item) {
+                        $item->livro->aumentarEstoque($item->quantity, 'cancelamento');
+                    }
+                    
+                    $order->update(['status' => 'payment_failed']);
+                    throw new \Exception('Falha no pagamento. Tente novamente.');
                 }
-
-                // Marcar carrinho como processado
-                $cart->update([
-                    'status' => 'completed',
-                    'user_id' => auth()->id(),
-                ]);
             });
-
-            session()->forget('cart_id');
-            
-            return redirect()->route('orders.index')->with('success', 'Pedido realizado com sucesso!');
             
         } catch (\Exception $e) {
             Log::error('Erro no checkout: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Erro ao processar pedido: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -260,11 +237,27 @@ class CartController extends Controller
 
         $cart = Cart::create([
             'session_id' => session()->getId(),
+            'user_id' => auth()->id(),
             'status' => 'active',
         ]);
         session(['cart_id' => $cart->id]);
 
         return $cart;
+    }
+
+    private function validateCartStock(Cart $cart): array
+    {
+        $errors = [];
+        
+        foreach ($cart->items as $item) {
+            if (!$item->livro->ativo) {
+                $errors[] = "O livro '{$item->livro->titulo}' não está mais disponível";
+            } elseif ($item->livro->estoque < $item->quantity) {
+                $errors[] = "Estoque insuficiente para '{$item->livro->titulo}'. Disponível: {$item->livro->estoque}";
+            }
+        }
+        
+        return $errors;
     }
 
     private function getSugestoes($items)
@@ -274,9 +267,9 @@ class CartController extends Controller
         }
 
         // Buscar livros da mesma categoria dos itens no carrinho
-        $categorias = $items->pluck('livro.categoria')->filter()->unique();
+        $categorias = $items->pluck('livro.categoria_id')->filter()->unique();
         
-        return Livro::whereIn('categoria', $categorias)
+        return Livro::whereIn('categoria_id', $categorias)
             ->whereNotIn('id', $items->pluck('livro.id'))
             ->where('ativo', true)
             ->where('estoque', '>', 0)
@@ -287,10 +280,8 @@ class CartController extends Controller
 
     private function calculateShipping($items)
     {
-        // Simulação de cálculo de frete
         $totalWeight = $items->sum(function($item) {
-            // Assumindo peso médio de 0.5kg por livro
-            return $item->quantity * 0.5;
+            return ($item->livro->peso ?? 0.5) * $item->quantity;
         });
 
         if ($totalWeight <= 1) {
@@ -299,6 +290,25 @@ class CartController extends Controller
             return 18.90; // SEDEX
         } else {
             return 25.00; // Frete especial
+        }
+    }
+
+    private function processPayment(Order $order, string $method): bool
+    {
+        // Simulação de processamento de pagamento
+        switch ($method) {
+            case 'pix':
+                // PIX é instantâneo - 95% sucesso
+                return random_int(1, 100) <= 95;
+            case 'credit_card':
+            case 'debit_card':
+                // Cartões - 90% sucesso
+                return random_int(1, 100) <= 90;
+            case 'boleto':
+                // Boleto sempre aprovado (pagamento pendente)
+                return true;
+            default:
+                return false;
         }
     }
 

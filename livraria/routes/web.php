@@ -8,6 +8,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\LojaController;
+use App\Http\Controllers\AvaliacaoController;
 use Illuminate\Support\Facades\Auth;
 
 // Página inicial da loja
@@ -22,8 +23,8 @@ Route::group(['prefix' => 'loja', 'as' => 'loja.'], function() {
     Route::get('/favoritos', [LojaController::class, 'favoritos'])->middleware('auth')->name('favoritos');
 });
 
-// Rotas administrativas para Livros (protegidas por autenticação)
-Route::group(['prefix' => 'admin', 'middleware' => 'auth'], function() {
+// Rotas administrativas (protegidas por admin middleware)
+Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function() {
     Route::resource('livros', LivroController::class);
     Route::resource('categorias', CategoriaController::class);
     Route::get('categorias/{categoria}/delete', [CategoriaController::class, 'confirmDelete'])->name('categorias.delete');
@@ -31,6 +32,13 @@ Route::group(['prefix' => 'admin', 'middleware' => 'auth'], function() {
 
 // Rotas para funcionalidades de usuário
 Route::post('livros/{livro}/favorite', [FavoriteController::class, 'toggle'])->name('livros.favorite');
+
+// Sistema de avaliações
+Route::group(['middleware' => 'auth'], function() {
+    Route::post('livros/{livro}/avaliacoes', [AvaliacaoController::class, 'store'])->name('avaliacoes.store');
+    Route::post('avaliacoes/{avaliacao}/util', [AvaliacaoController::class, 'marcarUtil'])->name('avaliacoes.util');
+    Route::get('livros/{livro}/avaliacoes', [AvaliacaoController::class, 'index'])->name('avaliacoes.index');
+});
 
 // Carrinho de compras
 Route::group(['prefix' => 'carrinho', 'as' => 'cart.'], function() {
@@ -50,7 +58,7 @@ Route::group(['middleware' => 'auth'], function() {
     Route::get('/pedidos', [OrderController::class, 'index'])->name('orders.index');
 });
 
-// Dashboard administrativo
+// Dashboard (apenas usuários autenticados)
 Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
 
 // Rotas de autenticação

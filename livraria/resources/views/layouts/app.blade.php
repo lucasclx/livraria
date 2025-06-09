@@ -410,49 +410,83 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="{{ route('loja.index') }}">
-                Biblioteca Literária
-            </a>
+    <!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{{ route('loja.index') }}">
+            Biblioteca Literária
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-link" href="{{ route('loja.catalogo') }}">
+                    <i class="fas fa-book me-1"></i>Catálogo
+                </a>
+                @auth
+                    @if(auth()->user()->is_admin)
+                        <a class="nav-link" href="{{ route('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                        <a class="nav-link" href="{{ route('livros.index') }}">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    @endif
+                @endauth
+            </div>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="navbar-nav ms-auto">
-                    <a class="nav-link position-relative" href="{{ route('cart.index') }}">
-                        <i class="fas fa-shopping-cart"></i>
-                        @php
-                            $cartCount = session('cart_id') ? \App\Models\Cart::withCount('items')->find(session('cart_id'))?->items_count : 0;
-                        @endphp
-                        @if($cartCount > 0)
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ $cartCount }}
-                            </span>
-                        @endif
+            <div class="navbar-nav">
+                <a class="nav-link position-relative" href="{{ route('cart.index') }}">
+                    <i class="fas fa-shopping-cart"></i>
+                    @php
+                        $cartCount = session('cart_id') ? \App\Models\Cart::withCount('items')->find(session('cart_id'))?->items_count : 0;
+                    @endphp
+                    @if($cartCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ $cartCount }}
+                        </span>
+                    @endif
+                </a>
+                
+                @guest
+                    <a class="nav-link" href="{{ route('login') }}">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login
                     </a>
-                    @auth
-                        <a class="nav-link" href="{{ route('orders.index') }}">
-                            <i class="fas fa-list me-1"></i> Meus Pedidos
+                    <a class="nav-link" href="{{ route('register') }}">
+                        <i class="fas fa-user-plus me-1"></i>Registrar
+                    </a>
+                @else
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>{{ Auth::user()->name }}
                         </a>
-                    @endauth
-                    @guest
-                        <a class="nav-link" href="{{ route('login') }}">
-                            <i class="fas fa-sign-in-alt me-1"></i> Login
-                        </a>
-                        @if (Route::has('register'))
-                            <a class="nav-link" href="{{ route('register') }}">
-                                <i class="fas fa-user-plus me-1"></i> Registrar-se
-                            </a>
-                        @endif
-                    @endguest
-                </div>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('orders.index') }}">
+                                <i class="fas fa-list me-2"></i>Meus Pedidos
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ route('loja.favoritos') }}">
+                                <i class="fas fa-heart me-2"></i>Favoritos
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Sair
+                                </a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    @csrf
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                @endguest
             </div>
         </div>
-    </nav>
-
+    </div>
+</nav>
     <!-- Main Content -->
     <div class="container my-4">
         <!-- Alerts -->

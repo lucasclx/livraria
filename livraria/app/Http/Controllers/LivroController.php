@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Livro;
+use App\Models\Categoria;
 use App\Http\Requests\LivroRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -13,7 +14,7 @@ class LivroController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Livro::query();
+        $query = Livro::with('categoria');
         
         // Busca por termo
         if ($request->filled('busca')) {
@@ -49,10 +50,9 @@ class LivroController extends Controller
         $livros = $query->paginate(12)->withQueryString();
         
         // Dados para filtros
-        $categorias = Livro::select('categoria')
-                          ->whereNotNull('categoria')
-                          ->distinct()
-                          ->pluck('categoria');
+        $categorias = Categoria::where('ativo', true)
+                              ->orderBy('nome')
+                              ->get();
         
         return view('livros.index', compact('livros', 'categorias'));
     }
@@ -60,14 +60,11 @@ class LivroController extends Controller
     public function create()
     {
         // Dados para formulário
-        $categorias = Livro::select('categoria')
-                          ->whereNotNull('categoria')
-                          ->distinct()
-                          ->orderBy('categoria')
-                          ->pluck('categoria');
+        $categorias = Categoria::where('ativo', true)
+                              ->orderBy('nome')
+                              ->get();
         
-        $editoras = Livro::select('editora')
-                        ->whereNotNull('editora')
+        $editoras = Livro::whereNotNull('editora')
                         ->distinct()
                         ->orderBy('editora')
                         ->pluck('editora');
@@ -116,23 +113,21 @@ class LivroController extends Controller
 
     public function show(Livro $livro)
     {
+        $livro->load('categoria', 'avaliacoes.user', 'stockMovements');
         return view('livros.show', compact('livro'));
     }
 
     public function edit(Livro $livro)
     {
         // Dados para formulário
-        $categorias = Livro::select('categoria')
-                          ->whereNotNull('categoria')
-                          ->distinct()
-                          ->orderBy('categoria')
-                          ->pluck('categoria');
+        $categorias = Categoria::where('ativo', true)
+                              ->orderBy('nome')
+                              ->get();
         
-        $editoras = Livro::select('editora')
-                        ->whereNotNull('editora')
+        $editoras = Livro::whereNotNull('editora')
                         ->distinct()
                         ->orderBy('editora')
-                        ->pluck('editoras');
+                        ->pluck('editora');
 
         return view('livros.edit', compact('livro', 'categorias', 'editoras'));
     }
@@ -178,6 +173,12 @@ class LivroController extends Controller
     public function destroy(Livro $livro)
     {
         try {
+            // Verificar se há itens em carrinho ou pedidos
+            if ($livro->cartItems()->count() > 0) {
+                return redirect()->route('livros.index')
+                    ->with('error', 'Não é possível excluir este livro pois há itens em carrinhos de compras.');
+            }
+
             // Delete associated image if exists
             if ($livro->imagem && Storage::disk('public')->exists('livros/' . $livro->imagem)) {
                 Storage::disk('public')->delete('livros/' . $livro->imagem);
@@ -192,5 +193,23 @@ class LivroController extends Controller
             return redirect()->route('livros.index')
                 ->with('error', 'Erro ao excluir livro: ' . $e->getMessage());
         }
+    }
+
+    // API Methods
+    public function searchApi(Request $request)
+    {
+        $termo = $request->get('q');
+        
+        if (strlen($termo) < 2) {
+            return response()->json([]);
+        }
+
+        $livros = Livro::buscar($termo)
+                      ->ativo()
+                      ->with('categoria')
+                      ->limit(10)
+                      ->get(['id', 'titulo', 'autor', 'categoria_id', 'preco', 'imagem']);
+
+        return response()->json($livros);
     }
 }
