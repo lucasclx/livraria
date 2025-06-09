@@ -27,13 +27,12 @@ class LojaController extends Controller
             ->get();
 
         /* 3. Livros por categoria (usando categoria_id) */
-        $livrosPorCategoria = Livro::select('categoria_id', DB::raw('COUNT(*) AS total'))
-            ->ativo()
-            ->emEstoque()
-            ->whereNotNull('categoria_id')
-            ->groupBy('categoria_id')
+        $livrosPorCategoria = Categoria::select('categorias.id', 'categorias.nome', 'categorias.slug', DB::raw('COUNT(livros.id) AS total'))
+            ->join('livros', 'livros.categoria_id', '=', 'categorias.id')
+            ->where('livros.ativo', true)
+            ->where('livros.estoque', '>', 0)
+            ->groupBy('categorias.id', 'categorias.nome', 'categorias.slug')
             ->orderByDesc('total')
-            ->with('categoria:id,nome,slug')   // eager-load para exibir nome/slug
             ->limit(8)
             ->get();
 
@@ -68,10 +67,9 @@ class LojaController extends Controller
         ));
     }
 
-
     public function catalogo(Request $request)
     {
-        $query = Livro::where('ativo', true);
+        $query = Livro::where('ativo', true)->with('categoria');
         
         // Busca por termo
         if ($request->filled('busca')) {
@@ -79,14 +77,25 @@ class LojaController extends Controller
             $query->where(function($q) use ($termo) {
                 $q->where('titulo', 'like', "%{$termo}%")
                   ->orWhere('autor', 'like', "%{$termo}%")
-                  ->orWhere('categoria', 'like', "%{$termo}%")
-                  ->orWhere('sinopse', 'like', "%{$termo}%");
+                  ->orWhere('sinopse', 'like', "%{$termo}%")
+                  ->orWhereHas('categoria', function($query) use ($termo) {
+                      $query->where('nome', 'like', "%{$termo}%");
+                  });
             });
         }
         
         // Filtro por categoria
         if ($request->filled('categoria')) {
-            $query->where('categoria', $request->categoria);
+            // Se categoria é um ID numérico
+            if (is_numeric($request->categoria)) {
+                $query->where('categoria_id', $request->categoria);
+            } else {
+                // Se categoria é um nome/slug
+                $query->whereHas('categoria', function($q) use ($request) {
+                    $q->where('nome', $request->categoria)
+                      ->orWhere('slug', $request->categoria);
+                });
+            }
         }
         
         // Filtro por faixa de preço
@@ -114,21 +123,26 @@ class LojaController extends Controller
         
         $livros = $query->paginate(12)->withQueryString();
         
-        // Dados para filtros
-        $categorias = Livro::select('categoria')
-                          ->whereNotNull('categoria')
-                          ->where('ativo', true)
-                          ->distinct()
-                          ->orderBy('categoria')
-                          ->pluck('categoria');
+        // Dados para filtros - corrigido para usar relacionamento
+        $categorias = Categoria::whereHas('livros', function($query) {
+            $query->where('ativo', true);
+        })
+        ->orderBy('nome')
+        ->get();
         
         return view('loja.catalogo', compact('livros', 'categorias'));
     }
 
-    public function categoria($categoria)
+    public function categoria($categoriaSlug)
     {
-        $livros = Livro::where('categoria', $categoria)
+        // Buscar categoria pelo slug ou nome
+        $categoria = Categoria::where('slug', $categoriaSlug)
+                             ->orWhere('nome', $categoriaSlug)
+                             ->firstOrFail();
+        
+        $livros = Livro::where('categoria_id', $categoria->id)
             ->where('ativo', true)
+            ->with('categoria')
             ->paginate(12);
 
         $totalLivros = $livros->total();
@@ -143,13 +157,21 @@ class LojaController extends Controller
             abort(404);
         }
 
-        // Livros relacionados da mesma categoria
-        $livrosRelacionados = Livro::where('categoria', $livro->categoria)
-            ->where('id', '!=', $livro->id)
-            ->where('ativo', true)
-            ->where('estoque', '>', 0)
-            ->limit(4)
-            ->get();
+        // Carregar o relacionamento com categoria
+        $livro->load('categoria');
+
+        // CORREÇÃO DO BUG: Livros relacionados usando categoria_id
+        $livrosRelacionados = collect();
+        
+        if ($livro->categoria_id) {
+            $livrosRelacionados = Livro::where('categoria_id', $livro->categoria_id)
+                ->where('id', '!=', $livro->id)
+                ->where('ativo', true)
+                ->where('estoque', '>', 0)
+                ->with('categoria')
+                ->limit(4)
+                ->get();
+        }
 
         // Verificar se está nos favoritos do usuário
         $isFavorito = false;
@@ -168,6 +190,7 @@ class LojaController extends Controller
 
         $favoritos = auth()->user()->favorites()
             ->where('ativo', true)
+            ->with('categoria')
             ->paginate(12);
 
         return view('loja.favoritos', compact('favoritos'));
@@ -182,11 +205,14 @@ class LojaController extends Controller
         }
 
         $livros = Livro::where('ativo', true)
+            ->with('categoria')
             ->where(function($query) use ($termo) {
                 $query->where('titulo', 'like', "%{$termo}%")
                       ->orWhere('autor', 'like', "%{$termo}%")
-                      ->orWhere('categoria', 'like', "%{$termo}%")
-                      ->orWhere('sinopse', 'like', "%{$termo}%");
+                      ->orWhere('sinopse', 'like', "%{$termo}%")
+                      ->orWhereHas('categoria', function($q) use ($termo) {
+                          $q->where('nome', 'like', "%{$termo}%");
+                      });
             })
             ->paginate(12);
 
