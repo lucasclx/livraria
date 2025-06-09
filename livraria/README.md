@@ -33,6 +33,7 @@ This project is a simple online bookstore built with Laravel. It allows you to m
    ```bash
    php artisan migrate
    ```
+   Migrations are idempotent because they check for existing columns before applying changes.
 6. Start the development server:
    ```bash
    php artisan serve
