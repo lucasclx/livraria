@@ -150,3 +150,8 @@ Route::get('/carrinho', function () {
 //     });
 //     return response()->json($routes);
 // });
+
+Route::get('/debug-categorias', function () {
+    $categorias = \App\Models\Categoria::has('livros')->withCount('livros')->get();
+    return response()->json($categorias);
+})->name('debug.categorias');

@@ -195,7 +195,7 @@
                         <i class="fas fa-user-edit me-1"></i>{{ $livro->autor }}
                     </p>
                     @if($livro->categoria)
-                    <span class="badge bg-secondary mb-3">{{ $livro->categoria }}</span>
+                    <span class="badge bg-secondary mb-3">{{ $livro->categoria->nome }}</span>
                     @endif
                     
                     <div class="mt-auto">
@@ -236,25 +236,64 @@
 </section>
 @endif
 
-<!-- Categorias Populares -->
-@if($livrosPorCategoria->count() > 0)
+<!-- Categorias Populares - Versão Robusta -->
 <section class="mb-5">
     <h2 class="section-title text-center w-100">🏷️ Explore por Categoria</h2>
+    
+    @php
+        // Fallback: se $livrosPorCategoria não estiver funcionando, buscar categorias simples
+        $categoriasParaExibir = [];
+        
+        if (isset($livrosPorCategoria) && $livrosPorCategoria && $livrosPorCategoria->count() > 0) {
+            $categoriasParaExibir = $livrosPorCategoria;
+        } else {
+            // Fallback: buscar categorias que têm livros
+            try {
+                $categoriasParaExibir = \App\Models\Categoria::whereHas('livros', function($query) {
+                    $query->where('ativo', true)->where('estoque', '>', 0);
+                })
+                ->withCount(['livros' => function($query) {
+                    $query->where('ativo', true)->where('estoque', '>', 0);
+                }])
+                ->orderBy('livros_count', 'desc')
+                ->limit(8)
+                ->get()
+                ->map(function($cat) {
+                    // Normalizar estrutura para compatibilidade
+                    $cat->total = $cat->livros_count;
+                    return $cat;
+                });
+            } catch (\Exception $e) {
+                $categoriasParaExibir = collect();
+            }
+        }
+    @endphp
+    
+    @if($categoriasParaExibir && count($categoriasParaExibir) > 0)
     <div class="row">
-        @foreach($livrosPorCategoria as $categoria)
+        @foreach($categoriasParaExibir as $categoria)
         <div class="col-lg-3 col-md-6 mb-4">
-            <a href="{{ route('loja.categoria', $categoria->categoria) }}" class="categoria-card d-block text-decoration-none">
+            <a href="{{ route('loja.categoria', $categoria->slug ?? $categoria->nome) }}" class="categoria-card d-block text-decoration-none">
                 <div class="mb-3">
                     <i class="fas fa-bookmark fa-3x"></i>
                 </div>
-                <h5 class="fw-bold">{{ $categoria->categoria }}</h5>
-                <p class="mb-0">{{ $categoria->total }} {{ $categoria->total == 1 ? 'livro' : 'livros' }}</p>
+                <h5 class="fw-bold">{{ $categoria->nome ?? 'Categoria' }}</h5>
+                <p class="mb-0">{{ $categoria->total ?? $categoria->livros_count ?? 0 }} {{ ($categoria->total ?? $categoria->livros_count ?? 0) == 1 ? 'livro' : 'livros' }}</p>
             </a>
         </div>
         @endforeach
     </div>
+    @else
+    <div class="text-center py-4">
+        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+        <h5>Categorias em breve!</h5>
+        <p class="text-muted">Estamos organizando nossos livros por categorias.</p>
+        <a href="{{ route('loja.catalogo') }}" class="btn btn-primary">
+            <i class="fas fa-book me-1"></i>Ver Todos os Livros
+        </a>
+    </div>
+    @endif
 </section>
-@endif
 
 <!-- Ofertas Especiais -->
 @if($ofertas->count() > 0)

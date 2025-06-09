@@ -11,60 +11,91 @@ class LojaController extends Controller
 {
     public function index()
     {
-        /* 1. Livros em destaque (mais recentes) */
-        $livrosDestaque = Livro::ativo()
-            ->emEstoque()
-            ->latest()
-            ->limit(8)
-            ->get();
+        try {
+            /* 1. Livros em destaque (mais recentes) */
+            $livrosDestaque = Livro::ativo()
+                ->emEstoque()
+                ->with('categoria') // Carregar relacionamento
+                ->latest()
+                ->limit(8)
+                ->get();
 
-        /* 2. Livros mais vendidos (aqui simulamos com aleatório; 
-              troque pela métrica real — ex.: visualizações — se existir) */
-        $livrosMaisVendidos = Livro::ativo()
-            ->emEstoque()
-            ->inRandomOrder()
-            ->limit(6)
-            ->get();
+            /* 2. Livros mais vendidos (aqui simulamos com aleatório; 
+                  troque pela métrica real — ex.: visualizações — se existir) */
+            $livrosMaisVendidos = Livro::ativo()
+                ->emEstoque()
+                ->with('categoria') // Carregar relacionamento
+                ->inRandomOrder()
+                ->limit(6)
+                ->get();
 
-        /* 3. Livros por categoria (usando categoria_id) */
-        $livrosPorCategoria = Categoria::select('categorias.id', 'categorias.nome', 'categorias.slug', DB::raw('COUNT(livros.id) AS total'))
-            ->join('livros', 'livros.categoria_id', '=', 'categorias.id')
-            ->where('livros.ativo', true)
-            ->where('livros.estoque', '>', 0)
-            ->groupBy('categorias.id', 'categorias.nome', 'categorias.slug')
-            ->orderByDesc('total')
-            ->limit(8)
-            ->get();
+            /* 3. Livros por categoria (usando categoria_id) */
+            $livrosPorCategoria = Categoria::select('categorias.id', 'categorias.nome', 'categorias.slug', DB::raw('COUNT(livros.id) AS total'))
+                ->join('livros', 'livros.categoria_id', '=', 'categorias.id')
+                ->where('livros.ativo', true)
+                ->where('livros.estoque', '>', 0)
+                ->whereNotNull('categorias.nome') // Garantir que nome não é null
+                ->groupBy('categorias.id', 'categorias.nome', 'categorias.slug')
+                ->orderByDesc('total')
+                ->limit(8)
+                ->get();
 
-        /* 4. Ofertas especiais (preço < 50) */
-        $ofertas = Livro::ativo()
-            ->emEstoque()
-            ->where('preco', '<', 50)
-            ->inRandomOrder()
-            ->limit(4)
-            ->get();
+            /* 4. Ofertas especiais (preço < 50) */
+            $ofertas = Livro::ativo()
+                ->emEstoque()
+                ->with('categoria') // Carregar relacionamento
+                ->where('preco', '<', 50)
+                ->inRandomOrder()
+                ->limit(4)
+                ->get();
 
-        /* 5. Estatísticas da loja */
-        $estatisticas = [
-            'total_livros'     => Livro::ativo()->count(),
-            'total_categorias' => Categoria::has('livros')->count(), // apenas categorias com livros
-            'total_autores'    => Livro::distinct('autor')->count(),
-            'livros_estoque'   => Livro::ativo()->sum('estoque'),
-        ];
+            /* 5. Estatísticas da loja */
+            $estatisticas = [
+                'total_livros'     => Livro::ativo()->count(),
+                'total_categorias' => Categoria::has('livros')->count(), // apenas categorias com livros
+                'total_autores'    => Livro::distinct('autor')->count(),
+                'livros_estoque'   => Livro::ativo()->sum('estoque'),
+            ];
 
-        /* 6. Catálogo completo (pagina 12) */
-        $livros = Livro::ativo()
-            ->emEstoque()
-            ->paginate(12);
+            /* 6. Catálogo completo (pagina 12) */
+            $livros = Livro::ativo()
+                ->emEstoque()
+                ->with('categoria') // Carregar relacionamento
+                ->paginate(12);
 
-        return view('loja.index', compact(
-            'livrosDestaque',
-            'livrosMaisVendidos',
-            'livrosPorCategoria',
-            'ofertas',
-            'estatisticas',
-            'livros'
-        ));
+            // Debug: Log das categorias (remover em produção)
+            \Log::info('Categorias encontradas:', [
+                'count' => $livrosPorCategoria->count(),
+                'data' => $livrosPorCategoria->toArray()
+            ]);
+
+            return view('loja.index', compact(
+                'livrosDestaque',
+                'livrosMaisVendidos',
+                'livrosPorCategoria',
+                'ofertas',
+                'estatisticas',
+                'livros'
+            ));
+
+        } catch (\Exception $e) {
+            // Em caso de erro, retornar dados vazios para evitar crash
+            \Log::error('Erro na página inicial da loja: ' . $e->getMessage());
+            
+            return view('loja.index', [
+                'livrosDestaque' => collect(),
+                'livrosMaisVendidos' => collect(),
+                'livrosPorCategoria' => collect(),
+                'ofertas' => collect(),
+                'estatisticas' => [
+                    'total_livros' => 0,
+                    'total_categorias' => 0,
+                    'total_autores' => 0,
+                    'livros_estoque' => 0,
+                ],
+                'livros' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 12)
+            ]);
+        }
     }
 
     public function catalogo(Request $request)
