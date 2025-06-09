@@ -55,9 +55,9 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/count', [CartController::class, 'getCartCount'])->name('count');
 });
 
-// Rotas de Checkout (requer autenticação)
+// Rotas de Checkout (requer autenticação) - CORRIGIDO
 Route::middleware('auth')->group(function () {
-    // Checkout usando CartController (que já existe)
+    // Rota principal de checkout
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
     Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
     
@@ -65,11 +65,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
     Route::post('/cart/checkout', [CartController::class, 'processCheckout'])->name('cart.process-checkout');
     
-    // Se o CheckoutController existir, adicionar estas rotas também
+    // Se você quiser usar um CheckoutController dedicado no futuro, pode descomentar estas rotas:
+    /*
     Route::prefix('checkout')->name('checkout.')->group(function () {
-        Route::get('/', [CartController::class, 'checkout'])->name('index');
-        Route::post('/process', [CartController::class, 'processCheckout'])->name('process');
+        Route::get('/', [CheckoutController::class, 'index'])->name('index');
+        Route::post('/process', [CheckoutController::class, 'process'])->name('process');
+        Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
+        Route::post('/calculate-shipping', [CheckoutController::class, 'calculateShipping'])->name('calculate-shipping');
     });
+    */
 });
 
 // Rotas de Pedidos (requer autenticação)
@@ -134,3 +138,15 @@ Route::get('/admin', function () {
 Route::get('/carrinho', function () {
     return redirect()->route('cart.index');
 })->name('carrinho');
+
+// Verificar todas as rotas definidas (apenas para debug - remover em produção)
+// Route::get('/debug-routes', function () {
+//     $routes = collect(Route::getRoutes())->map(function ($route) {
+//         return [
+//             'uri' => $route->uri(),
+//             'name' => $route->getName(),
+//             'action' => $route->getAction()['controller'] ?? 'Closure'
+//         ];
+//     });
+//     return response()->json($routes);
+// });
