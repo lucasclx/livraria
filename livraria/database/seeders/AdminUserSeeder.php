@@ -1,5 +1,4 @@
 <?php
-// database/seeders/AdminUserSeeder.php
 
 namespace Database\Seeders;
 
@@ -24,6 +23,8 @@ class AdminUserSeeder extends Seeder
             ]);
             
             $this->command->info('Usuário admin criado com sucesso!');
+            $this->command->info('Email: admin@livraria.com');
+            $this->command->info('Senha: admin123');
         } else {
             // Garantir que tenha permissão admin
             if (!$admin->is_admin) {
@@ -31,7 +32,26 @@ class AdminUserSeeder extends Seeder
                 $this->command->info('Permissões admin atualizadas para usuário existente!');
             } else {
                 $this->command->info('Usuário admin já existe!');
+                $this->command->info('Email: admin@livraria.com');
+                $this->command->info('Senha: admin123');
             }
+        }
+
+        // Criar usuário de teste
+        $testUser = User::where('email', 'user@livraria.com')->first();
+        
+        if (!$testUser) {
+            User::create([
+                'name' => 'Usuário Teste',
+                'email' => 'user@livraria.com',
+                'password' => Hash::make('user123'),
+                'is_admin' => false,
+                'email_verified_at' => now(),
+            ]);
+            
+            $this->command->info('Usuário teste criado com sucesso!');
+            $this->command->info('Email: user@livraria.com');
+            $this->command->info('Senha: user123');
         }
     }
 }

@@ -27,7 +27,7 @@ Route::get('/', function () {
 // Rotas de autenticação
 Auth::routes();
 
-// Rota home (dashboard) - com middleware de admin
+// Rota home (dashboard) - apenas auth, verificação de admin será no controller
 Route::get('/home', [HomeController::class, 'index'])->name('dashboard')->middleware('auth');
 
 // Rotas da Loja (públicas)
@@ -56,17 +56,20 @@ Route::prefix('cart')->name('cart.')->group(function () {
 });
 
 // Rotas de Checkout (requer autenticação)
-Route::middleware('auth')->prefix('checkout')->name('checkout.')->group(function () {
-    Route::get('/', [CheckoutController::class, 'index'])->name('index');
-    Route::post('/process', [CheckoutController::class, 'process'])->name('process');
-    Route::get('/success/{order}', [CheckoutController::class, 'success'])->name('success');
-    Route::post('/calculate-shipping', [CheckoutController::class, 'calculateShipping'])->name('calculate-shipping');
-});
-
-// Rotas alternativas para checkout (compatibilidade)
 Route::middleware('auth')->group(function () {
+    // Checkout usando CartController (que já existe)
+    Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
+    Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
+    
+    // Rotas alternativas para compatibilidade
     Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
     Route::post('/cart/checkout', [CartController::class, 'processCheckout'])->name('cart.process-checkout');
+    
+    // Se o CheckoutController existir, adicionar estas rotas também
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/', [CartController::class, 'checkout'])->name('index');
+        Route::post('/process', [CartController::class, 'processCheckout'])->name('process');
+    });
 });
 
 // Rotas de Pedidos (requer autenticação)
@@ -93,8 +96,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/avaliacoes/{avaliacao}/util', [AvaliacaoController::class, 'marcarUtil'])->name('avaliacoes.util');
 });
 
-// Rotas Administrativas (requer autenticação e permissão de admin)
-Route::middleware(['auth', 'admin'])->group(function () {
+// Rotas Administrativas (apenas auth, verificação de admin será no controller)
+Route::middleware('auth')->group(function () {
     
     // Rotas de Livros (CRUD)
     Route::resource('livros', LivroController::class);
@@ -116,21 +119,18 @@ Route::middleware(['auth', 'admin'])->group(function () {
     });
 });
 
-// Middleware personalizado para admin
-Route::middleware(['auth'])->group(function () {
-    Route::get('/admin', function () {
-        if (!auth()->user()->is_admin) {
-            abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
-        }
-        return redirect()->route('dashboard');
-    })->name('admin');
-});
+// Rota admin alternativa
+Route::get('/admin', function () {
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+    if (!auth()->user()->is_admin) {
+        abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
+    }
+    return redirect()->route('dashboard');
+})->name('admin')->middleware('auth');
 
 // Rotas de fallback para compatibilidade
 Route::get('/carrinho', function () {
     return redirect()->route('cart.index');
 })->name('carrinho');
-
-Route::get('/checkout', function () {
-    return redirect()->route('checkout.index');
-})->middleware('auth');

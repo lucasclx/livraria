@@ -17,7 +17,7 @@ class HomeController extends Controller
 
     public function index()
     {
-        // Redirecionar usuários não-admin para a loja
+        // Verificar se o usuário é admin - se não, redirecionar para loja
         if (!auth()->user()->is_admin) {
             return redirect()->route('loja.index');
         }

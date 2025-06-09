@@ -12,8 +12,22 @@ use Illuminate\Support\Facades\Log;
 
 class LivroController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    private function checkAdmin()
+    {
+        if (!auth()->user()->is_admin) {
+            abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
+        }
+    }
+
     public function index(Request $request)
     {
+        $this->checkAdmin();
+        
         $query = Livro::with('categoria');
         
         // Busca por termo
@@ -59,6 +73,8 @@ class LivroController extends Controller
 
     public function create()
     {
+        $this->checkAdmin();
+        
         // Dados para formulário
         $categorias = Categoria::where('ativo', true)
                               ->orderBy('nome')
@@ -72,9 +88,39 @@ class LivroController extends Controller
         return view('livros.create', compact('categorias', 'editoras'));
     }
 
-    public function store(LivroRequest $request)
+    public function store($request)
     {
-        $data = $request->validated();
+        $this->checkAdmin();
+        
+        // Se não é uma instância de LivroRequest, validar manualmente
+        if (!$request instanceof \App\Http\Requests\LivroRequest) {
+            $data = $request->validate([
+                'titulo' => 'required|string|max:255',
+                'autor' => 'required|string|max:100',
+                'isbn' => 'nullable|string|max:20|unique:livros',
+                'preco' => 'required|numeric|min:0.01|max:99999.99',
+                'preco_promocional' => 'nullable|numeric|min:0.01|max:99999.99|lt:preco',
+                'editora' => 'nullable|string|max:100',
+                'ano_publicacao' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
+                'paginas' => 'nullable|integer|min:1|max:99999',
+                'categoria_id' => 'nullable|exists:categorias,id',
+                'estoque' => 'required|integer|min:0|max:99999',
+                'estoque_minimo' => 'nullable|integer|min:0|max:9999',
+                'peso' => 'nullable|numeric|min:0.001|max:99.999',
+                'dimensoes' => 'nullable|string|max:50',
+                'idioma' => 'nullable|string|max:50',
+                'edicao' => 'nullable|string|max:50',
+                'encadernacao' => 'nullable|string|max:50',
+                'sinopse' => 'nullable|string|max:2000',
+                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+                'ativo' => 'boolean',
+                'destaque' => 'boolean',
+                'promocao_inicio' => 'nullable|date|before_or_equal:promocao_fim',
+                'promocao_fim' => 'nullable|date|after_or_equal:promocao_inicio',
+            ]);
+        } else {
+            $data = $request->validated();
+        }
 
         // Handle image upload
         if ($request->hasFile('imagem')) {
@@ -99,6 +145,10 @@ class LivroController extends Controller
             }
         }
 
+        // Converter checkbox values
+        $data['ativo'] = $request->has('ativo') ? true : false;
+        $data['destaque'] = $request->has('destaque') ? true : false;
+
         try {
             Livro::create($data);
             return redirect()->route('livros.index')
@@ -113,12 +163,16 @@ class LivroController extends Controller
 
     public function show(Livro $livro)
     {
+        $this->checkAdmin();
+        
         $livro->load('categoria', 'avaliacoes.user', 'stockMovements');
         return view('livros.show', compact('livro'));
     }
 
     public function edit(Livro $livro)
     {
+        $this->checkAdmin();
+        
         // Dados para formulário
         $categorias = Categoria::where('ativo', true)
                               ->orderBy('nome')
@@ -132,9 +186,39 @@ class LivroController extends Controller
         return view('livros.edit', compact('livro', 'categorias', 'editoras'));
     }
 
-    public function update(LivroRequest $request, Livro $livro)
+    public function update($request, Livro $livro)
     {
-        $data = $request->validated();
+        $this->checkAdmin();
+        
+        // Se não é uma instância de LivroRequest, validar manualmente
+        if (!$request instanceof \App\Http\Requests\LivroRequest) {
+            $data = $request->validate([
+                'titulo' => 'required|string|max:255',
+                'autor' => 'required|string|max:100',
+                'isbn' => 'nullable|string|max:20|unique:livros,isbn,' . $livro->id,
+                'preco' => 'required|numeric|min:0.01|max:99999.99',
+                'preco_promocional' => 'nullable|numeric|min:0.01|max:99999.99|lt:preco',
+                'editora' => 'nullable|string|max:100',
+                'ano_publicacao' => 'nullable|integer|min:1000|max:' . (date('Y') + 1),
+                'paginas' => 'nullable|integer|min:1|max:99999',
+                'categoria_id' => 'nullable|exists:categorias,id',
+                'estoque' => 'required|integer|min:0|max:99999',
+                'estoque_minimo' => 'nullable|integer|min:0|max:9999',
+                'peso' => 'nullable|numeric|min:0.001|max:99.999',
+                'dimensoes' => 'nullable|string|max:50',
+                'idioma' => 'nullable|string|max:50',
+                'edicao' => 'nullable|string|max:50',
+                'encadernacao' => 'nullable|string|max:50',
+                'sinopse' => 'nullable|string|max:2000',
+                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+                'ativo' => 'boolean',
+                'destaque' => 'boolean',
+                'promocao_inicio' => 'nullable|date|before_or_equal:promocao_fim',
+                'promocao_fim' => 'nullable|date|after_or_equal:promocao_inicio',
+            ]);
+        } else {
+            $data = $request->validated();
+        }
 
         // Handle image upload
         if ($request->hasFile('imagem')) {
@@ -158,6 +242,10 @@ class LivroController extends Controller
             }
         }
 
+        // Converter checkbox values
+        $data['ativo'] = $request->has('ativo') ? true : false;
+        $data['destaque'] = $request->has('destaque') ? true : false;
+
         try {
             $livro->update($data);
             return redirect()->route('livros.index')
@@ -172,6 +260,8 @@ class LivroController extends Controller
 
     public function destroy(Livro $livro)
     {
+        $this->checkAdmin();
+        
         try {
             // Verificar se há itens em carrinho ou pedidos
             if ($livro->cartItems()->count() > 0) {
@@ -195,9 +285,18 @@ class LivroController extends Controller
         }
     }
 
+    public function confirmDelete(Livro $livro)
+    {
+        $this->checkAdmin();
+        
+        return view('livros.delete', compact('livro'));
+    }
+
     // API Methods
     public function searchApi(Request $request)
     {
+        $this->checkAdmin();
+        
         $termo = $request->get('q');
         
         if (strlen($termo) < 2) {

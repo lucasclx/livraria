@@ -10,20 +10,48 @@ use Illuminate\Support\Str;
 
 class CategoriaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
+    private function checkAdmin()
+    {
+        if (!auth()->user()->is_admin) {
+            abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
+        }
+    }
+
     public function index()
     {
+        $this->checkAdmin();
+        
         $categorias = Categoria::orderBy('nome')->paginate(10);
         return view('categorias.index', compact('categorias'));
     }
 
     public function create()
     {
+        $this->checkAdmin();
+        
         return view('categorias.create');
     }
 
-    public function store(CategoriaRequest $request)
+    public function store($request)
     {
-        $data = $request->validated();
+        $this->checkAdmin();
+        
+        // Se não é uma instância de CategoriaRequest, validar manualmente
+        if (!$request instanceof \App\Http\Requests\CategoriaRequest) {
+            $data = $request->validate([
+                'nome' => 'required|string|min:3|max:100',
+                'descricao' => 'nullable|string|max:500',
+                'ativo' => 'boolean',
+                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+        } else {
+            $data = $request->validated();
+        }
 
         if ($request->hasFile('imagem')) {
             $imagem = $request->file('imagem');
@@ -31,6 +59,9 @@ class CategoriaController extends Controller
             $imagem->storeAs('public/categorias', $nomeImagem);
             $data['imagem'] = $nomeImagem;
         }
+
+        // Converter checkbox
+        $data['ativo'] = $request->has('ativo') ? true : false;
 
         Categoria::create($data);
 
@@ -40,17 +71,33 @@ class CategoriaController extends Controller
 
     public function show(Categoria $categoria)
     {
+        $this->checkAdmin();
+        
         return view('categorias.show', compact('categoria'));
     }
 
     public function edit(Categoria $categoria)
     {
+        $this->checkAdmin();
+        
         return view('categorias.edit', compact('categoria'));
     }
 
-    public function update(CategoriaRequest $request, Categoria $categoria)
+    public function update($request, Categoria $categoria)
     {
-        $data = $request->validated();
+        $this->checkAdmin();
+        
+        // Se não é uma instância de CategoriaRequest, validar manualmente
+        if (!$request instanceof \App\Http\Requests\CategoriaRequest) {
+            $data = $request->validate([
+                'nome' => 'required|string|min:3|max:100',
+                'descricao' => 'nullable|string|max:500',
+                'ativo' => 'boolean',
+                'imagem' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+        } else {
+            $data = $request->validated();
+        }
 
         if ($request->hasFile('imagem')) {
             // Remove imagem antiga
@@ -64,6 +111,9 @@ class CategoriaController extends Controller
             $data['imagem'] = $nomeImagem;
         }
 
+        // Converter checkbox
+        $data['ativo'] = $request->has('ativo') ? true : false;
+
         $categoria->update($data);
 
         return redirect()->route('categorias.index')
@@ -72,6 +122,8 @@ class CategoriaController extends Controller
 
     public function destroy(Categoria $categoria)
     {
+        $this->checkAdmin();
+        
         try {
             // Verifica se há livros vinculados
             if ($categoria->livros()->count() > 0) {
@@ -91,6 +143,8 @@ class CategoriaController extends Controller
 
     public function confirmDelete(Categoria $categoria)
     {
+        $this->checkAdmin();
+        
         return view('categorias.delete', compact('categoria'));
     }
 }

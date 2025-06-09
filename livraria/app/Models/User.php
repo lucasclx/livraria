@@ -1,5 +1,4 @@
 <?php
-// app/Models/User.php (atualização)
 
 namespace App\Models;
 
@@ -16,6 +15,9 @@ class User extends Authenticatable
         'email',
         'password',
         'is_admin',
+        'telefone',
+        'data_nascimento',
+        'genero',
     ];
 
     protected $hidden = [
@@ -29,12 +31,23 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_admin' => 'boolean',
+            'data_nascimento' => 'date',
         ];
     }
 
     public function favorites()
     {
         return $this->belongsToMany(Livro::class, 'favorites')->withTimestamps();
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function avaliacoes()
+    {
+        return $this->hasMany(AvaliacaoLivro::class);
     }
 
     public function isAdmin()
