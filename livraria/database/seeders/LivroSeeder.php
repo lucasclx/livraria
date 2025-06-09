@@ -1,98 +1,87 @@
 <?php
-// arquivo: database/seeders/LivroSeeder.php
+// database/seeders/LivroSeeder.php
 
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use App\Models\Livro;
+use App\Models\Categoria;
 
 class LivroSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Verificar se já existem livros para evitar duplicatas
         if (Livro::count() > 0) {
-            $this->command->info('Livros já existem no banco. Pulando seeder...');
+            $this->command->info('Livros já existem. Pulando...');
             return;
         }
 
         $livros = [
             [
                 'titulo' => 'Dom Casmurro',
-                'autor' => 'Machado de Assis',
-                'isbn' => '9788525406958',
-                'editora' => 'Globo Livros',
+                'autor'  => 'Machado de Assis',
+                'isbn'   => '9788525406958',
+                'editora'=> 'Globo Livros',
                 'ano_publicacao' => 1899,
-                'preco' => 29.90,
-                'paginas' => 256,
-                'sinopse' => 'Romance clássico da literatura brasileira que narra a história de Bentinho e Capitu, explorando temas como ciúme, traição e a dúvida que corrói o coração humano.',
-                'categoria' => 'Literatura Brasileira',
-                'estoque' => 15,
-                'ativo' => true,
+                'preco'  => 29.90,
+                'paginas'=> 256,
+                'sinopse'=> 'Romance clássico da literatura brasileira...',
+                'categoria_nome' => 'Literatura Brasileira',
+                'estoque'=> 15,
             ],
             [
                 'titulo' => 'O Cortiço',
-                'autor' => 'Aluísio Azevedo',
-                'isbn' => '9788520925478',
-                'editora' => 'Scipione',
+                'autor'  => 'Aluísio Azevedo',
+                'isbn'   => '9788520925478',
+                'editora'=> 'Scipione',
                 'ano_publicacao' => 1890,
-                'preco' => 24.90,
-                'paginas' => 312,
-                'sinopse' => 'Obra naturalista que retrata a vida em um cortiço no Rio de Janeiro do século XIX, mostrando as condições sociais da época.',
-                'categoria' => 'Literatura Brasileira',
-                'estoque' => 8,
-                'ativo' => true,
+                'preco'  => 24.90,
+                'paginas'=> 312,
+                'sinopse'=> 'Obra naturalista que retrata a vida em um cortiço...',
+                'categoria_nome' => 'Literatura Brasileira',
+                'estoque'=> 8,
             ],
             [
                 'titulo' => 'Clean Code',
-                'autor' => 'Robert C. Martin',
-                'isbn' => '9780132350884',
-                'editora' => 'Prentice Hall',
+                'autor'  => 'Robert C. Martin',
+                'isbn'   => '9780132350884',
+                'editora'=> 'Prentice Hall',
                 'ano_publicacao' => 2008,
-                'preco' => 89.90,
-                'paginas' => 464,
-                'sinopse' => 'Manual de desenvolvimento ágil de software com práticas para escrever código limpo, legível e manutenível.',
-                'categoria' => 'Tecnologia',
-                'estoque' => 25,
-                'ativo' => true,
+                'preco'  => 89.90,
+                'paginas'=> 464,
+                'sinopse'=> 'Manual sobre práticas de código limpo.',
+                'categoria_nome' => 'Tecnologia',
+                'estoque'=> 25,
             ],
-            [
-                'titulo' => '1984',
-                'autor' => 'George Orwell',
-                'isbn' => '9788535914849',
-                'editora' => 'Companhia das Letras',
-                'ano_publicacao' => 1949,
-                'preco' => 34.90,
-                'paginas' => 416,
-                'sinopse' => 'Distopia clássica sobre um regime totalitário que controla todos os aspectos da vida humana através da vigilância e manipulação.',
-                'categoria' => 'Ficção Científica',
-                'estoque' => 12,
-                'ativo' => true,
-            ],
-            [
-                'titulo' => 'O Pequeno Príncipe',
-                'autor' => 'Antoine de Saint-Exupéry',
-                'isbn' => '9788535909827',
-                'editora' => 'Companhia das Letras',
-                'ano_publicacao' => 1943,
-                'preco' => 19.90,
-                'paginas' => 96,
-                'sinopse' => 'Fábula poética sobre amizade, amor e a natureza humana, contada através dos olhos de uma criança.',
-                'categoria' => 'Literatura Infantil',
-                'estoque' => 30,
-                'ativo' => true,
-            ],
-            // Adicione mais livros conforme necessário...
+            // …
         ];
 
-        foreach ($livros as $livroData) {
-            // Usar updateOrCreate para evitar duplicatas
+        foreach ($livros as $dados) {
+            /* 1. Garante que a categoria exista e obtém o ID */
+            $categoria = Categoria::firstOrCreate(
+                ['nome' => $dados['categoria_nome']],
+                ['slug' => Str::slug($dados['categoria_nome'])]
+            );
+
+            /* 2. Cria ou atualiza o livro usando categoria_id */
             Livro::updateOrCreate(
-                ['isbn' => $livroData['isbn']], // Buscar por ISBN
-                $livroData // Dados para criar/atualizar
+                ['isbn' => $dados['isbn']],
+                [
+                    'titulo'        => $dados['titulo'],
+                    'autor'         => $dados['autor'],
+                    'editora'       => $dados['editora'],
+                    'ano_publicacao'=> $dados['ano_publicacao'],
+                    'preco'         => $dados['preco'],
+                    'paginas'       => $dados['paginas'],
+                    'sinopse'       => $dados['sinopse'],
+                    'categoria_id'  => $categoria->id,
+                    'estoque'       => $dados['estoque'],
+                    'ativo'         => true,
+                ]
             );
         }
 
-        $this->command->info('Livros inseridos com sucesso!');
+        $this->command->info('Livros inseridos/atualizados com sucesso!');
     }
 }

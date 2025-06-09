@@ -85,6 +85,9 @@
         height: 3px;
         background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
         border-radius: 2px;
+    }   
+    h1 {
+        color: var(--white);
     }
 </style>
 
@@ -94,7 +97,7 @@
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <h1 class="display-4 fw-bold mb-4">
-                    📚 Bem-vindo à Biblioteca Literária
+                     Bem-vindo à Biblioteca Literária
                 </h1>
                 <p class="lead mb-4">
                     Descubra mundos infinitos através das páginas dos nossos livros. 

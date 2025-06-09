@@ -409,7 +409,7 @@
     @stack('styles')
 </head>
 <body>
-    <!-- Navigation -->
+  
     <!-- Navigation -->
 <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
     <div class="container">

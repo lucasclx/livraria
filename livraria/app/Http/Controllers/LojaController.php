@@ -11,46 +11,49 @@ class LojaController extends Controller
 {
     public function index()
     {
-        // Livros em destaque (mais recentes)
-        $livrosDestaque = Livro::where('ativo', true)
-            ->where('estoque', '>', 0)
+        /* 1. Livros em destaque (mais recentes) */
+        $livrosDestaque = Livro::ativo()
+            ->emEstoque()
             ->latest()
             ->limit(8)
             ->get();
 
-        // Livros mais vendidos (simulado por mais visualizados)
-        $livrosMaisVendidos = Livro::where('ativo', true)
-            ->where('estoque', '>', 0)
+        /* 2. Livros mais vendidos (aqui simulamos com aleatório; 
+              troque pela métrica real — ex.: visualizações — se existir) */
+        $livrosMaisVendidos = Livro::ativo()
+            ->emEstoque()
             ->inRandomOrder()
             ->limit(6)
             ->get();
 
-        // Livros por categoria
-        $livrosPorCategoria = Livro::select('categoria', DB::raw('count(*) as total'))
-            ->where('ativo', true)
-            ->whereNotNull('categoria')
-            ->groupBy('categoria')
+        /* 3. Livros por categoria (usando categoria_id) */
+        $livrosPorCategoria = Livro::select('categoria_id', DB::raw('COUNT(*) AS total'))
+            ->ativo()
+            ->emEstoque()
+            ->whereNotNull('categoria_id')
+            ->groupBy('categoria_id')
             ->orderByDesc('total')
+            ->with('categoria:id,nome,slug')   // eager-load para exibir nome/slug
             ->limit(8)
             ->get();
 
-        // Ofertas especiais (livros com preço menor)
-        $ofertas = Livro::where('ativo', true)
-            ->where('estoque', '>', 0)
+        /* 4. Ofertas especiais (preço < 50) */
+        $ofertas = Livro::ativo()
+            ->emEstoque()
             ->where('preco', '<', 50)
             ->inRandomOrder()
             ->limit(4)
             ->get();
 
-        // Estatísticas da loja
+        /* 5. Estatísticas da loja */
         $estatisticas = [
-            'total_livros' => Livro::where('ativo', true)->count(),
-            'total_categorias' => Livro::whereNotNull('categoria')->distinct('categoria')->count(),
-            'total_autores' => Livro::distinct('autor')->count(),
-            'livros_estoque' => Livro::where('estoque', '>', 0)->sum('estoque')
+            'total_livros'     => Livro::ativo()->count(),
+            'total_categorias' => Categoria::has('livros')->count(), // apenas categorias com livros
+            'total_autores'    => Livro::distinct('autor')->count(),
+            'livros_estoque'   => Livro::ativo()->sum('estoque'),
         ];
 
-        // Catálogo completo para a página inicial
+        /* 6. Catálogo completo (pagina 12) */
         $livros = Livro::ativo()
             ->emEstoque()
             ->paginate(12);
@@ -64,6 +67,7 @@ class LojaController extends Controller
             'livros'
         ));
     }
+
 
     public function catalogo(Request $request)
     {

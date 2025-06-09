@@ -62,7 +62,7 @@ class Livro extends Model
     // Relacionamentos
     public function categoria()
     {
-        return $this->belongsTo(Categoria::class);
+        return $this->belongsTo(Categoria::class); 
     }
 
     public function avaliacoes()
