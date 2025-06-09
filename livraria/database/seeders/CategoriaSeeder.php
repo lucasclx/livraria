@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 use App\Models\Categoria;
 
 class CategoriaSeeder extends Seeder
@@ -38,7 +39,12 @@ class CategoriaSeeder extends Seeder
         ];
 
         foreach ($categorias as $categoria) {
-            Categoria::create($categoria);
+            Categoria::create([
+                'nome' => $categoria['nome'],
+                'descricao' => $categoria['descricao'],
+                'ativo' => $categoria['ativo'],
+                'slug' => Str::slug($categoria['nome']),
+            ]);
         }
     }
 }
