@@ -10,16 +10,20 @@ return new class extends Migration
     {
         Schema::table('categorias', function (Blueprint $table) {
             // acrescenta a coluna APÓS o campo nome
-            $table->string('slug')
-                  ->unique()
-                  ->after('nome');
+            if (!Schema::hasColumn('categorias', 'slug')) {
+                $table->string('slug')
+                      ->unique()
+                      ->after('nome');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('categorias', function (Blueprint $table) {
-            $table->dropColumn('slug');
+            if (Schema::hasColumn('categorias', 'slug')) {
+                $table->dropColumn('slug');
+            }
         });
     }
 };
