@@ -122,7 +122,7 @@ class PerfilController extends Controller
 // resources/views/perfil/index.blade.php - Página principal do perfil
 
 @extends('layouts.app')
-@section('title', 'Meu Perfil - Biblioteca Literária')
+@section('title', 'Meu Perfil - Livraria Mil Páginas')
 
 @section('content')
 <div class="perfil-container">

@@ -1,6 +1,6 @@
 {{-- resources/views/auth/register.blade.php --}}
 @extends('layouts.auth')
-@section('title', 'Registrar - Biblioteca Literária')
+@section('title', 'Registrar - Livraria Mil Páginas')
 @section('subtitle', 'Crie sua conta')
 
 @section('content')

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Meu Carrinho - Biblioteca Literária')
+@section('title', 'Meu Carrinho - Livraria Mil Páginas')
 
 @section('content')
 <div class="cart-page">
@@ -74,7 +74,7 @@
                                                 <i class="fas fa-user-edit"></i> {{ $item->livro->autor }}
                                             </p>
                                             @if($item->livro->categoria)
-                                                <span class="badge bg-secondary small">{{ $item->livro->categoria }}</span>
+                                                <span class="badge bg-secondary small">{{ $item->livro->categoria->nome }}</span>
                                             @endif
                                             
                                             <!-- Status do Estoque -->
@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Funções de compartilhamento
 function shareWhatsApp() {
-    const text = "Confira minha seleção de livros na Biblioteca Literária!";
+    const text = "Confira minha seleção de livros na Livraria Mil Páginas!";
     const url = window.location.href;
     window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`);
 }

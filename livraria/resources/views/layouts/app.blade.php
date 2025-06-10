@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Biblioteca Literária')</title>
+    <title>@yield('title', 'Livraria Mil Páginas')</title>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -414,7 +414,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
     <div class="container">
         <a class="navbar-brand" href="{{ route('loja.index') }}">
-            Biblioteca Literária
+            Livraria Mil Páginas
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -519,7 +519,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5>📚 Biblioteca Literária</h5>
+                    <h5>📚 Livraria Mil Páginas</h5>
                     <p class="mb-0">Organizando conhecimento, inspirando leitores.</p>
                 </div>
                 <div class="col-md-6 text-md-end">

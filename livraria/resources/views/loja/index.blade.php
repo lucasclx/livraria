@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Biblioteca Literária - Sua Livraria Online')
+@section('title', 'Livraria Mil Páginas - Sua Livraria Online')
 
 @section('content')
 <style>
@@ -30,25 +30,6 @@
     
     .stats-card:hover {
         transform: translateY(-5px);
-    }
-    
-    .livro-card {
-        transition: all 0.3s ease;
-        border: none;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .livro-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-    }
-    
-    .livro-image {
-        height: 250px;
-        object-fit: cover;
-        width: 100%;
     }
     
     .categoria-card {
@@ -97,7 +78,7 @@
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <h1 class="display-4 fw-bold mb-4">
-                     Bem-vindo à Biblioteca Literária
+                     Bem-vindo à Livraria Mil Páginas
                 </h1>
                 <p class="lead mb-4">
                     Descubra mundos infinitos através das páginas dos nossos livros. 
@@ -159,78 +140,7 @@
     </div>
     <div class="row">
         @foreach($livrosDestaque as $livro)
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card livro-card h-100">
-                <div class="position-relative">
-                    @if($livro->imagem)
-                        <img src="{{ $livro->imagem_url }}" class="livro-image" alt="{{ $livro->titulo }}">
-                    @else
-                        <div class="livro-image bg-light d-flex align-items-center justify-content-center">
-                            <i class="fas fa-book fa-3x text-muted"></i>
-                        </div>
-                    @endif
-                    
-                    <!-- Badge de novidade -->
-                    <div class="position-absolute top-0 start-0 m-2">
-                        <span class="badge bg-success">NOVO</span>
-                    </div>
-                    
-                    <!-- Botão de favorito -->
-                    @auth
-                    <div class="position-absolute top-0 end-0 m-2">
-                        <button class="btn btn-sm btn-light rounded-circle favorite-btn" 
-                                data-livro-id="{{ $livro->id }}"
-                                onclick="toggleFavorite({{ $livro->id }})">
-                            <i class="far fa-heart"></i>
-                        </button>
-                    </div>
-                    @endauth
-                </div>
-                
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title fw-bold mb-2">
-                        {{ Str::limit($livro->titulo, 40) }}
-                    </h6>
-                    <p class="text-muted small mb-2">
-                        <i class="fas fa-user-edit me-1"></i>{{ $livro->autor }}
-                    </p>
-                    @if($livro->categoria)
-                    <span class="badge bg-secondary mb-3">{{ $livro->categoria->nome }}</span>
-                    @endif
-                    
-                    <div class="mt-auto">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="h5 text-success mb-0">{{ $livro->preco_formatado }}</span>
-                            <small class="text-muted">
-                                <i class="fas fa-boxes"></i> {{ $livro->estoque }}
-                            </small>
-                        </div>
-                        
-                        <div class="d-grid gap-2">
-                            @if($livro->estoque > 0)
-                                <form method="POST" action="{{ route('cart.add', $livro) }}">
-                                    @csrf
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-primary btn-sm w-100">
-                                        <i class="fas fa-cart-plus me-1"></i>
-                                        Adicionar
-                                    </button>
-                                </form>
-                            @else
-                                <button class="btn btn-secondary btn-sm w-100" disabled>
-                                    <i class="fas fa-ban me-1"></i>
-                                    Esgotado
-                                </button>
-                            @endif
-                            <a href="{{ route('loja.detalhes', $livro) }}" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-eye me-1"></i>
-                                Detalhes
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            @include('components.livro-card', ['livro' => $livro])
         @endforeach
     </div>
 </section>
@@ -304,74 +214,19 @@
     </div>
     <div class="row">
         @foreach($ofertas as $livro)
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="card livro-card h-100">
-                <div class="position-relative">
-                    @if($livro->imagem)
-                        <img src="{{ $livro->imagem_url }}" class="livro-image" alt="{{ $livro->titulo }}">
-                    @else
-                        <div class="livro-image bg-light d-flex align-items-center justify-content-center">
-                            <i class="fas fa-book fa-3x text-muted"></i>
-                        </div>
-                    @endif
-                    
-                    <!-- Badge de oferta -->
-                    <div class="position-absolute top-0 start-0 m-2">
-                        <span class="badge bg-danger">OFERTA</span>
-                    </div>
-                </div>
-                
-                <div class="card-body d-flex flex-column">
-                    <h6 class="card-title fw-bold mb-2">
-                        {{ Str::limit($livro->titulo, 40) }}
-                    </h6>
-                    <p class="text-muted small mb-2">
-                        <i class="fas fa-user-edit me-1"></i>{{ $livro->autor }}
-                    </p>
-                    
-                    <div class="mt-auto">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <span class="h5 text-success mb-0">{{ $livro->preco_formatado }}</span>
-                                <small class="text-muted text-decoration-line-through ms-1">
-                                    R$ {{ number_format($livro->preco * 1.2, 2, ',', '.') }}
-                                </small>
-                            </div>
-                        </div>
-                        
-                        <div class="d-grid">
-                            @if($livro->estoque > 0)
-                                <form method="POST" action="{{ route('cart.add', $livro) }}">
-                                    @csrf
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="fas fa-cart-plus me-1"></i>
-                                        Aproveitar Oferta
-                                    </button>
-                                </form>
-                            @else
-                                <button class="btn btn-secondary btn-sm" disabled>
-                                    Esgotado
-                                </button>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+            @include('components.livro-card', ['livro' => $livro])
         @endforeach
     </div>
 </section>
 @endif
 
+<!-- Nosso Catálogo -->
 @if($livros->count() > 0)
 <section class="mb-5">
     <h2 class="section-title text-center w-100">📚 Nosso Catálogo</h2>
     <div class="row">
         @foreach($livros as $livro)
-            <div class="col-lg-3 col-md-6 mb-4">
-                @include('components.livro-card', ['livro' => $livro])
-            </div>
+            @include('components.livro-card', ['livro' => $livro])
         @endforeach
     </div>
     <div class="d-flex justify-content-center mt-4">
@@ -405,34 +260,6 @@
 
 @push('scripts')
 <script>
-// Função para favoritar livros
-function toggleFavorite(livroId) {
-    @auth
-    fetch(`/livros/${livroId}/favorite`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        const button = document.querySelector(`[data-livro-id="${livroId}"]`);
-        const icon = button.querySelector('i');
-        if (data.favorited) {
-            icon.classList.remove('far');
-            icon.classList.add('fas', 'text-danger');
-        } else {
-            icon.classList.remove('fas', 'text-danger');
-            icon.classList.add('far');
-        }
-    })
-    .catch(error => console.error('Erro:', error));
-    @else
-    window.location.href = '{{ route("login") }}';
-    @endauth
-}
-
 // Smooth scroll para âncoras
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {

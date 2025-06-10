@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $livro->titulo . ' - ' . $livro->autor . ' - Biblioteca Literária')
+@section('title', $livro->titulo . ' - ' . $livro->autor . ' - Livraria Mil Páginas')
 
 @section('content')
 <div class="container-fluid py-4">

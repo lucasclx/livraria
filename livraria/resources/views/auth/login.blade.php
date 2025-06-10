@@ -1,6 +1,6 @@
 {{-- resources/views/auth/login.blade.php --}}
 @extends('layouts.auth')
-@section('title', 'Login - Biblioteca Literária')
+@section('title', 'Login - Livraria Mil Páginas')
 @section('subtitle', 'Faça login em sua conta')
 
 @section('content')

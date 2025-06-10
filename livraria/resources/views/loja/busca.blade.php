@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', "Busca por '{$termo}' - Biblioteca Literária")
+@section('title', "Busca por '{$termo}' - Livraria Mil Páginas")
 
 @section('content')
 <div class="container-fluid py-4">

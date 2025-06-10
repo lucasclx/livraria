@@ -2,7 +2,7 @@
 // resources/views/perfil/editar.blade.php - Página de edição de perfil
 
 @extends('layouts.app')
-@section('title', 'Editar Perfil - Biblioteca Literária')
+@section('title', 'Editar Perfil - Livraria Mil Páginas')
 
 @section('content')
 <div class="container">
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // resources/views/perfil/pedidos.blade.php - Página de histórico de pedidos
 
 @extends('layouts.app')
-@section('title', 'Meus Pedidos - Biblioteca Literária')
+@section('title', 'Meus Pedidos - Livraria Mil Páginas')
 
 @section('content')
 <div class="container">
