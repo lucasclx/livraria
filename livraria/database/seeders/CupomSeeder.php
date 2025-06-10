@@ -1,4 +1,5 @@
 <?php
+// database/seeders/CupomSeeder.php - VERSÃO CORRIGIDA
 
 namespace Database\Seeders;
 
@@ -36,27 +37,15 @@ class CupomSeeder extends Seeder
                 'ativo' => true,
             ],
             [
-                'codigo' => 'BLACKFRIDAY25',
-                'descricao' => '25% de desconto - Black Friday',
-                'tipo' => 'percentual',
-                'valor' => 25.00,
-                'valor_minimo_pedido' => 100.00,
-                'limite_uso' => 500,
-                'primeiro_pedido_apenas' => false,
-                'valido_de' => Carbon::create(2024, 11, 24),
-                'valido_ate' => Carbon::create(2024, 11, 30),
-                'ativo' => false, // Exemplo de cupom inativo
-            ],
-            [
-                'codigo' => 'NATAL2024',
+                'codigo' => 'NATAL2025', // CORRIGIDO DE 2024 PARA 2025
                 'descricao' => 'Promoção de Natal - 20% off',
                 'tipo' => 'percentual',
                 'valor' => 20.00,
                 'valor_minimo_pedido' => 75.00,
                 'limite_uso' => 200,
                 'primeiro_pedido_apenas' => false,
-                'valido_de' => Carbon::create(2024, 12, 1),
-                'valido_ate' => Carbon::create(2024, 12, 25),
+                'valido_de' => Carbon::now(), // CORRIGIDO PARA DATA ATUAL
+                'valido_ate' => Carbon::now()->addMonths(3), // CORRIGIDO PARA 3 MESES À FRENTE
                 'ativo' => true,
             ],
             [
@@ -92,7 +81,18 @@ class CupomSeeder extends Seeder
             );
         }
 
-        $this->command->info('Cupons de exemplo criados com sucesso!');
+        // CORRIGIR CUPOM EXPIRADO EXISTENTE
+        $cupomExistente = Cupom::where('codigo', 'NATAL2024')->first();
+        if ($cupomExistente) {
+            $cupomExistente->update([
+                'codigo' => 'NATAL2025',
+                'valido_de' => Carbon::now(),
+                'valido_ate' => Carbon::now()->addMonths(3),
+                'ativo' => true
+            ]);
+        }
+
+        $this->command->info('Cupons corrigidos com sucesso!');
         $this->command->info('Códigos disponíveis:');
         foreach ($cupons as $cupom) {
             $status = $cupom['ativo'] ? '✅' : '❌';
@@ -100,3 +100,4 @@ class CupomSeeder extends Seeder
         }
     }
 }
+?>

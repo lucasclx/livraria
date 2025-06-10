@@ -1,0 +1,17 @@
+[90m= [39m[34;4mApp\Models\Cupom[39;24m {#6369
+    [34mid[39m: [35m4[39m,
+    [34mcodigo[39m: "[32mNATAL2024[39m",
+    [34mdescricao[39m: "[32mPromoção de Natal - 20% off[39m",
+    [34mtipo[39m: "[32mpercentual[39m",
+    [34mvalor[39m: "[32m20.00[39m",
+    [34mvalor_minimo_pedido[39m: "[32m75.00[39m",
+    [34mlimite_uso[39m: [35m200[39m,
+    [34mvezes_usado[39m: [35m0[39m,
+    [34mprimeiro_pedido_apenas[39m: [35m0[39m,
+    [34mvalido_de[39m: "[32m2024-12-01 00:00:00[39m",
+    [34mvalido_ate[39m: "[32m2024-12-25 00:00:00[39m",
+    [34mativo[39m: [35m1[39m,
+    [34mcreated_at[39m: "[32m2025-06-09 22:53:02[39m",
+    [34mupdated_at[39m: "[32m2025-06-09 22:53:02[39m",
+  }
+
