@@ -37,8 +37,13 @@
         </div>
     @endif
 
+    <!-- Loading para operações do carrinho -->
+    <div id="cart-loading" style="display: none;">
+        <x-loading-spinner />
+    </div>
+
     @if($items->count() > 0)
-        <div class="row">
+        <div class="row" id="cart-content">
             <!-- Lista de Itens -->
             <div class="col-lg-8">
                 <div class="cart-items">
@@ -132,7 +137,7 @@
                                             </strong>
                                             <div class="item-actions mt-2">
                                                 <form method="POST" action="{{ route('cart.item.remove', $item) }}" 
-                                                      class="d-inline-block">
+                                                      class="d-inline-block remove-item-form">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm btn-outline-danger" 
                                                             data-bs-toggle="tooltip" title="Remover item"
@@ -150,7 +155,7 @@
 
                     <!-- Botão Limpar Carrinho -->
                     <div class="cart-actions text-end mb-4">
-                        <form method="POST" action="{{ route('cart.clear') }}" class="d-inline-block">
+                        <form method="POST" action="{{ route('cart.clear') }}" class="d-inline-block clear-cart-form">
                             @csrf
                             <button type="submit" class="btn btn-outline-danger btn-sm"
                                     onclick="return confirm('Deseja limpar todo o carrinho?')">
@@ -206,9 +211,9 @@
                             <!-- Botões de Ação -->
                             <div class="d-grid gap-2">
                                 @auth
-                                    <a href="{{ route('checkout') }}" class="btn btn-primary btn-lg">
+                                    <button class="btn btn-primary btn-lg" id="checkout-btn" onclick="goToCheckout()">
                                         <i class="fas fa-credit-card"></i> Finalizar Compra
-                                    </a>
+                                    </button>
                                 @else
                                     <a href="{{ route('login') }}" class="btn btn-primary btn-lg">
                                         <i class="fas fa-sign-in-alt"></i> Entrar para Comprar
@@ -255,7 +260,7 @@
 
     @else
         <!-- Carrinho Vazio -->
-        <div class="empty-cart text-center py-5">
+        <div class="empty-cart text-center py-5" id="empty-cart-state">
             <div class="empty-cart-icon mb-4">
                 <i class="fas fa-shopping-cart fa-5x text-muted"></i>
             </div>
@@ -296,6 +301,19 @@
                         <i class="fas fa-copy"></i> Copiar Link
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Checkout Loading -->
+<div class="modal fade" id="checkoutLoadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <x-loading-spinner />
+                <h5 class="mt-3">Preparando seu pedido...</h5>
+                <p class="text-muted">Aguarde enquanto validamos os itens do seu carrinho</p>
             </div>
         </div>
     </div>
@@ -378,6 +396,33 @@
     color: var(--bs-dark);
 }
 
+.cart-item.updating {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
     .cart-item .row > div {
         margin-bottom: 1rem;
@@ -403,10 +448,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (action === 'increase' && currentValue < max) {
                 input.value = currentValue + 1;
-                form.submit();
+                submitQuantityForm(form);
             } else if (action === 'decrease' && currentValue > 1) {
                 input.value = currentValue - 1;
-                form.submit();
+                submitQuantityForm(form);
             }
         });
     });
@@ -415,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.quantity-input').forEach(input => {
         input.addEventListener('change', function() {
             if (this.value >= 1 && this.value <= this.max) {
-                this.closest('.quantity-form').submit();
+                submitQuantityForm(this.closest('.quantity-form'));
             }
         });
     });
@@ -442,7 +487,52 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Loading para remoção de itens
+    document.querySelectorAll('.remove-item-form').forEach(form => {
+        form.addEventListener('submit', function() {
+            showCartLoading();
+        });
+    });
+
+    // Loading para limpar carrinho
+    document.querySelector('.clear-cart-form')?.addEventListener('submit', function() {
+        showCartLoading();
+    });
 });
+
+// Função para mostrar loading no carrinho
+function showCartLoading() {
+    document.getElementById('cart-loading').style.display = 'block';
+    document.getElementById('cart-content').style.opacity = '0.5';
+}
+
+// Função para submeter formulário de quantidade com loading
+function submitQuantityForm(form) {
+    const cartItem = form.closest('.cart-item');
+    cartItem.classList.add('updating');
+    
+    // Simular delay para mostrar loading
+    setTimeout(() => {
+        form.submit();
+    }, 500);
+}
+
+// Função para ir para checkout com loading
+function goToCheckout() {
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const modal = new bootstrap.Modal(document.getElementById('checkoutLoadingModal'));
+    
+    checkoutBtn.classList.add('loading');
+    checkoutBtn.disabled = true;
+    
+    modal.show();
+    
+    // Simular validação
+    setTimeout(() => {
+        window.location.href = '/checkout';
+    }, 2000);
+}
 
 // Funções de compartilhamento
 function shareWhatsApp() {
@@ -458,7 +548,16 @@ function shareFacebook() {
 
 function copyCartLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
-        alert('Link do carrinho copiado!');
+        showToast('Link do carrinho copiado!', 'success');
+    }).catch(() => {
+        // Fallback para navegadores antigos
+        const textArea = document.createElement('textarea');
+        textArea.value = window.location.href;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('Link do carrinho copiado!', 'success');
     });
 }
 </script>
