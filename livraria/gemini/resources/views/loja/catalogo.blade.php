@@ -1,5 +1,3 @@
-{{-- resources/views/loja/catalogo-with-components.blade.php --}}
-{{-- Exemplo completo de uma página usando todos os componentes --}}
 @extends('layouts.app')
 
 @section('title', 'Catálogo - Livraria Mil Páginas')
@@ -7,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-4">
     
-    {{-- Header com Busca Avançada --}}
+    <!-- Header com Busca -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="search-section text-center py-4 bg-gradient rounded-3 mb-4">
@@ -16,222 +14,316 @@
                 </h1>
                 <div class="row justify-content-center">
                     <div class="col-lg-8">
-                        <x-search-bar 
-                            placeholder="Buscar por título, autor, ISBN..."
-                            :categories="$categorias"
-                            :showFilters="true"
-                            value="{{ request('q') }}"
-                        />
+                        <!-- Busca Simplificada -->
+                        <form action="{{ route('loja.catalogo') }}" method="GET" class="search-form">
+                            <div class="input-group input-group-lg">
+                                <input type="text" 
+                                       name="busca" 
+                                       class="form-control" 
+                                       placeholder="Buscar por título, autor, ISBN..."
+                                       value="{{ request('busca') }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Estatísticas e Filtros Ativos --}}
+    <!-- Filtros e Estatísticas -->
     <div class="row mb-4">
         <div class="col-md-8">
-            @if(request()->hasAny(['q', 'categoria', 'preco_min', 'preco_max']))
-                <div class="active-filters">
-                    <h6 class="mb-2">Filtros Ativos:</h6>
-                    <div class="d-flex flex-wrap gap-2">
-                        @if(request('q'))
-                            <span class="badge bg-primary">
-                                Busca: "{{ request('q') }}"
-                                <button type="button" class="btn-close btn-close-white ms-1" 
-                                        onclick="removeFilter('q')"></button>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <h4 class="mb-0">Catálogo</h4>
+                <span class="badge bg-primary fs-6">
+                    {{ $livros->total() }} {{ $livros->total() == 1 ? 'livro' : 'livros' }}
+                </span>
+                
+                @if(request()->hasAny(['busca', 'categoria', 'preco_min', 'preco_max']))
+                    <div class="active-filters">
+                        @if(request('busca'))
+                            <span class="badge bg-secondary">
+                                Busca: "{{ request('busca') }}"
+                                <a href="{{ route('loja.catalogo', request()->except('busca')) }}" class="text-white ms-1">×</a>
                             </span>
                         @endif
                         @if(request('categoria'))
                             <span class="badge bg-secondary">
                                 Categoria: {{ request('categoria') }}
-                                <button type="button" class="btn-close btn-close-white ms-1" 
-                                        onclick="removeFilter('categoria')"></button>
+                                <a href="{{ route('loja.catalogo', request()->except('categoria')) }}" class="text-white ms-1">×</a>
                             </span>
                         @endif
+                        <a href="{{ route('loja.catalogo') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Limpar Filtros
+                        </a>
+                    </div>
+                @endif
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <!-- Ordenação -->
+            <form action="{{ route('loja.catalogo') }}" method="GET" class="d-inline-block">
+                @foreach(request()->except('ordem') as $key => $value)
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endforeach
+                <select name="ordem" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
+                    <option value="titulo" {{ request('ordem') == 'titulo' ? 'selected' : '' }}>A-Z</option>
+                    <option value="preco" {{ request('ordem') == 'preco' ? 'selected' : '' }}>Menor Preço</option>
+                    <option value="preco_desc" {{ request('ordem') == 'preco_desc' ? 'selected' : '' }}>Maior Preço</option>
+                    <option value="created_at" {{ request('ordem') == 'created_at' ? 'selected' : '' }}>Mais Novos</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filtros Laterais -->
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filtros</h6>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('loja.catalogo') }}" method="GET">
+                        @if(request('busca'))
+                            <input type="hidden" name="busca" value="{{ request('busca') }}">
+                        @endif
+                        
+                        <!-- Categorias -->
+                        <div class="mb-4">
+                            <h6>Categorias</h6>
+                            @foreach($categorias as $categoria)
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="categoria" 
+                                           value="{{ $categoria->id }}" 
+                                           id="cat{{ $categoria->id }}"
+                                           {{ request('categoria') == $categoria->id ? 'checked' : '' }}>
+                                    <label class="form-check-label small" for="cat{{ $categoria->id }}">
+                                        {{ $categoria->nome }}
+                                        <span class="text-muted">({{ $categoria->livros_count }})</span>
+                                    </label>
+                                </div>
+                            @endforeach
+                            @if(request('categoria'))
+                                <a href="{{ route('loja.catalogo', request()->except('categoria')) }}" class="small text-muted">
+                                    <i class="fas fa-times me-1"></i>Limpar categoria
+                                </a>
+                            @endif
+                        </div>
+
+                        <!-- Faixa de Preço -->
+                        <div class="mb-4">
+                            <h6>Faixa de Preço</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="number" 
+                                           class="form-control form-control-sm" 
+                                           name="preco_min" 
+                                           placeholder="Min" 
+                                           value="{{ request('preco_min') }}"
+                                           step="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" 
+                                           class="form-control form-control-sm" 
+                                           name="preco_max" 
+                                           placeholder="Max" 
+                                           value="{{ request('preco_max') }}"
+                                           step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Disponibilidade -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="disponivel" 
+                                       value="1" 
+                                       id="disponivel"
+                                       {{ request('disponivel') ? 'checked' : '' }}>
+                                <label class="form-check-label small" for="disponivel">
+                                    Apenas disponíveis
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-search me-1"></i>Aplicar Filtros
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Livros -->
+        <div class="col-lg-9">
+            @if($livros->count() > 0)
+                <!-- Loading inicial -->
+                <div id="initial-loading" style="display: none;">
+                    <x-loading-spinner />
+                </div>
+                
+                <div class="row" id="livros-grid">
+                    @foreach($livros as $livro)
+                        <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                            <div class="card book-card h-100 shadow-sm">
+                                <!-- Imagem -->
+                                <div class="position-relative">
+                                    <img src="{{ $livro->imagem_url }}" 
+                                         class="card-img-top" 
+                                         alt="{{ $livro->titulo }}"
+                                         style="height: 280px; object-fit: cover;">
+                                    
+                                    <!-- Badge de Desconto -->
+                                    @if($livro->tem_promocao)
+                                        <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                            -{{ $livro->getDesconto() }}%
+                                        </span>
+                                    @endif
+                                    
+                                    <!-- Botão de Favorito -->
+                                    @auth
+                                        @php
+                                            $isFavorito = auth()->user()->favorites()->where('livro_id', $livro->id)->exists();
+                                        @endphp
+                                        <button class="btn btn-light btn-sm rounded-circle position-absolute top-0 start-0 m-2 favorite-btn"
+                                                data-livro-id="{{ $livro->id }}"
+                                                data-favorited="{{ $isFavorito ? 'true' : 'false' }}"
+                                                onclick="toggleFavorite({{ $livro->id }}, this)">
+                                            <i class="fas fa-heart {{ $isFavorito ? 'text-danger' : 'text-muted' }}"></i>
+                                        </button>
+                                    @endauth
+                                </div>
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <!-- Título e Autor -->
+                                    <h6 class="card-title fw-bold mb-2" style="min-height: 3rem;">
+                                        <a href="{{ route('loja.detalhes', $livro) }}" 
+                                           class="text-decoration-none text-dark">
+                                            {{ Str::limit($livro->titulo, 50) }}
+                                        </a>
+                                    </h6>
+                                    
+                                    <p class="text-muted small mb-2">
+                                        <i class="fas fa-user me-1"></i>{{ $livro->autor }}
+                                    </p>
+                                    
+                                    <!-- Categoria -->
+                                    @if($livro->categoria)
+                                        <div class="mb-2">
+                                            <span class="badge bg-secondary small">{{ $livro->categoria->nome }}</span>
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- Avaliação -->
+                                    @if($livro->avaliacao_media > 0)
+                                        <div class="mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="text-warning me-2">
+                                                    @for($i = 1; $i <= 5; $i++)
+                                                        <i class="fas fa-star{{ $i <= $livro->avaliacao_media ? '' : '-o' }}"></i>
+                                                    @endfor
+                                                </div>
+                                                <small class="text-muted">
+                                                    {{ number_format($livro->avaliacao_media, 1) }}
+                                                    ({{ $livro->total_avaliacoes }})
+                                                </small>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- Preço -->
+                                    <div class="mt-auto">
+                                        <div class="price-section mb-3">
+                                            @if($livro->tem_promocao)
+                                                <div class="d-flex align-items-center">
+                                                    <span class="text-muted text-decoration-line-through me-2">
+                                                        R$ {{ number_format($livro->preco, 2, ',', '.') }}
+                                                    </span>
+                                                    <span class="text-success fw-bold h5 mb-0">
+                                                        R$ {{ number_format($livro->preco_promocional, 2, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                                <small class="text-success">
+                                                    Economize R$ {{ number_format($livro->preco - $livro->preco_promocional, 2, ',', '.') }}
+                                                </small>
+                                            @else
+                                                <span class="text-success fw-bold h5">
+                                                    R$ {{ number_format($livro->preco, 2, ',', '.') }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        
+                                        <!-- Botões de Ação -->
+                                        <div class="d-grid gap-2">
+                                            @if($livro->estoque > 0)
+                                                <button class="btn btn-primary btn-add-cart" 
+                                                        data-livro-id="{{ $livro->id }}"
+                                                        onclick="addToCart({{ $livro->id }})">
+                                                    <i class="fas fa-shopping-cart me-1"></i>
+                                                    Adicionar ao Carrinho
+                                                </button>
+                                            @else
+                                                <button class="btn btn-secondary" disabled>
+                                                    <i class="fas fa-ban me-1"></i>
+                                                    Indisponível
+                                                </button>
+                                            @endif
+                                            
+                                            <a href="{{ route('loja.detalhes', $livro) }}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Ver Detalhes
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                
+                <!-- Paginação -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-center">
+                            {{ $livros->appends(request()->query())->links() }}
+                        </div>
+                    </div>
+                </div>
+                
+            @else
+                <!-- Estado Vazio com Loading para busca -->
+                <div class="row">
+                    <div class="col-12">
+                        <div id="search-loading" style="display: none;">
+                            <x-loading-spinner />
+                        </div>
+                        
+                        <div class="empty-state text-center py-5">
+                            <i class="fas fa-search fa-5x text-muted mb-4"></i>
+                            <h3>Nenhum livro encontrado</h3>
+                            <p class="text-muted mb-4">
+                                Tente ajustar os filtros ou fazer uma nova busca.
+                            </p>
+                            <a href="{{ route('loja.catalogo') }}" class="btn btn-primary">
+                                <i class="fas fa-undo me-1"></i>
+                                Ver Todos os Livros
+                            </a>
+                        </div>
                     </div>
                 </div>
             @endif
         </div>
-        <div class="col-md-4 text-end">
-            <div class="results-info">
-                <span class="text-muted">
-                    {{ $livros->total() }} {{ $livros->total() == 1 ? 'livro encontrado' : 'livros encontrados' }}
-                </span>
-            </div>
-        </div>
     </div>
-
-    {{-- Grid de Livros --}}
-    @if($livros->count() > 0)
-        <div class="row" id="livros-grid">
-            @foreach($livros as $livro)
-                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 mb-4">
-                    <div class="card book-card h-100 shadow-sm">
-                        {{-- Imagem --}}
-                        <div class="position-relative">
-                            <img src="{{ $livro->imagem_url }}" 
-                                 class="card-img-top" 
-                                 alt="{{ $livro->titulo }}"
-                                 style="height: 280px; object-fit: cover;">
-                            
-                            {{-- Badge de Desconto --}}
-                            @if($livro->preco_original && $livro->preco_original > $livro->preco)
-                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                    -{{ round((($livro->preco_original - $livro->preco) / $livro->preco_original) * 100) }}%
-                                </span>
-                            @endif
-                            
-                            {{-- Botão de Favorito --}}
-                            @auth
-                                <button class="btn btn-light btn-sm rounded-circle position-absolute top-0 start-0 m-2 favorite-btn"
-                                        data-livro-id="{{ $livro->id }}"
-                                        onclick="toggleFavorite({{ $livro->id }})">
-                                    <i class="fas fa-heart {{ $livro->isFavorited ? 'text-danger' : 'text-muted' }}"></i>
-                                </button>
-                            @endauth
-                        </div>
-                        
-                        <div class="card-body d-flex flex-column">
-                            {{-- Título e Autor --}}
-                            <h6 class="card-title fw-bold mb-2" style="min-height: 3rem;">
-                                <a href="{{ route('loja.detalhes', $livro) }}" 
-                                   class="text-decoration-none text-dark">
-                                    {{ Str::limit($livro->titulo, 50) }}
-                                </a>
-                            </h6>
-                            
-                            <p class="text-muted small mb-2">
-                                <i class="fas fa-user me-1"></i>{{ $livro->autor }}
-                            </p>
-                            
-                            {{-- Categoria --}}
-                            @if($livro->categoria)
-                                <div class="mb-2">
-                                    <span class="badge bg-secondary small">{{ $livro->categoria->nome }}</span>
-                                </div>
-                            @endif
-                            
-                            {{-- Avaliação --}}
-                            <div class="mb-3">
-                                <x-rating-stars 
-                                    :rating="$livro->avaliacao_media ?? 0"
-                                    :totalReviews="$livro->total_avaliacoes ?? 0"
-                                    :showValue="true"
-                                    :showCount="true"
-                                    size="sm"
-                                />
-                            </div>
-                            
-                            {{-- Preço --}}
-                            <div class="mt-auto">
-                                <x-price-display 
-                                    :price="$livro->preco"
-                                    :originalPrice="$livro->preco_original"
-                                    size="md"
-                                    :showSavings="true"
-                                    :installments="$livro->preco > 50 ? ['count' => 3, 'value' => $livro->preco / 3] : null"
-                                />
-                                
-                                {{-- Botões de Ação --}}
-                                <div class="d-grid gap-2 mt-3">
-                                    @if($livro->estoque > 0)
-                                        <button class="btn btn-primary btn-add-cart" 
-                                                data-livro-id="{{ $livro->id }}"
-                                                onclick="addToCart({{ $livro->id }})">
-                                            <i class="fas fa-shopping-cart me-1"></i>
-                                            Adicionar ao Carrinho
-                                        </button>
-                                    @else
-                                        <button class="btn btn-secondary" disabled>
-                                            <i class="fas fa-ban me-1"></i>
-                                            Indisponível
-                                        </button>
-                                    @endif
-                                    
-                                    <button class="btn btn-outline-primary btn-sm" 
-                                            onclick="quickView({{ $livro->id }})">
-                                        <i class="fas fa-eye me-1"></i>
-                                        Visualização Rápida
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-        
-        {{-- Paginação Customizada --}}
-        <div class="row mt-4">
-            <div class="col-12">
-                <x-pagination-custom 
-                    :paginator="$livros"
-                    theme="rounded"
-                    size="md"
-                    :showJumper="$livros->lastPage() > 10"
-                    :showInfo="true"
-                />
-            </div>
-        </div>
-        
-    @else
-        {{-- Estado Vazio --}}
-        <div class="row">
-            <div class="col-12">
-                <div class="empty-state text-center py-5">
-                    <i class="fas fa-search fa-5x text-muted mb-4"></i>
-                    <h3>Nenhum livro encontrado</h3>
-                    <p class="text-muted mb-4">
-                        Tente ajustar os filtros ou fazer uma nova busca.
-                    </p>
-                    <button class="btn btn-primary" onclick="clearAllFilters()">
-                        <i class="fas fa-undo me-1"></i>
-                        Limpar Filtros
-                    </button>
-                </div>
-            </div>
-        </div>
-    @endif
 </div>
-
-{{-- Modal de Visualização Rápida --}}
-<x-modal 
-    id="quick-view-modal"
-    title="Visualização Rápida"
-    size="lg"
-    :centered="true"
->
-    <div id="quick-view-content">
-        {{-- Conteúdo carregado via AJAX --}}
-    </div>
-    
-    <x-slot name="footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Fechar
-        </button>
-        <button type="button" class="btn btn-primary" id="quick-add-cart">
-            <i class="fas fa-shopping-cart me-1"></i>
-            Adicionar ao Carrinho
-        </button>
-    </x-slot>
-</x-modal>
-
-{{-- Modal de Confirmação de Remoção --}}
-<x-modal 
-    id="confirm-remove-favorite"
-    type="confirmation"
-    title="Remover dos Favoritos"
-    icon="fas fa-heart-broken text-danger"
-    confirmText="Sim, Remover"
-    cancelText="Cancelar"
-    confirmClass="btn-outline-danger"
->
-    Deseja remover este livro dos seus favoritos?
-</x-modal>
-
-{{-- Container para Notificações --}}
-<div id="notification-container"></div>
 
 @endsection
 
@@ -306,6 +398,17 @@
     .favorite-btn {
         opacity: 1;
     }
+    
+    .d-flex.gap-3 {
+        gap: 1rem !important;
+    }
+}
+
+.price-section {
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 </style>
 @endpush
@@ -313,24 +416,33 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar sistema de notificações
-    if (typeof NotificationSystem !== 'undefined') {
-        NotificationSystem.init();
-    }
-    
-    // Mostrar notificações de sessão
-    @if(session('success'))
-        NotificationSystem.success('{{ session('success') }}');
-    @endif
-    
-    @if(session('error'))
-        NotificationSystem.error('{{ session('error') }}');
-    @endif
-    
     // Inicializar tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Mostrar loading ao fazer busca
+    const searchForm = document.querySelector('.search-form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function() {
+            const loadingContainer = document.getElementById('initial-loading');
+            if (loadingContainer) {
+                loadingContainer.style.display = 'block';
+                document.getElementById('livros-grid').style.display = 'none';
+            }
+        });
+    }
+    
+    // Mostrar loading ao aplicar filtros
+    const filterForms = document.querySelectorAll('form[action*="catalogo"]');
+    filterForms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const loadingContainer = document.getElementById('search-loading');
+            if (loadingContainer) {
+                loadingContainer.style.display = 'block';
+            }
+        });
     });
 });
 
@@ -354,22 +466,9 @@ async function addToCart(livroId) {
             body: JSON.stringify({ quantity: 1 })
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            // Sucesso - mostrar notificação
-            NotificationSystem.success('Livro adicionado ao carrinho!', {
-                actions: [
-                    {
-                        text: 'Ver Carrinho',
-                        onclick: 'window.location.href="/cart"'
-                    },
-                    {
-                        text: 'Continuar',
-                        action: 'dismiss'
-                    }
-                ]
-            });
+        if (response.ok) {
+            // Sucesso
+            showToast('Livro adicionado ao carrinho!', 'success');
             
             // Atualizar contador do carrinho (se existir)
             updateCartCounter();
@@ -387,9 +486,148 @@ async function addToCart(livroId) {
             }, 2000);
             
         } else {
-            throw new Error(data.message || 'Erro ao adicionar ao carrinho');
+            throw new Error('Erro ao adicionar ao carrinho');
         }
         
     } catch (error) {
         console.error('Erro:', error);
-        NotificationSystem.error
+        showToast('Erro ao adicionar ao carrinho', 'error');
+        
+        button.innerHTML = originalText;
+        button.disabled = false;
+    } finally {
+        button.classList.remove('loading');
+    }
+}
+
+// Toggle favorito
+function toggleFavorite(livroId, button) {
+    // Verificar se usuário está logado
+    @guest
+        showToast('Você precisa estar logado para favoritar livros', 'warning');
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
+        return;
+    @endguest
+    
+    const icon = button.querySelector('i');
+    const originalText = button.innerHTML;
+    
+    // Loading state
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch(`/favoritos/toggle/${livroId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        button.innerHTML = originalText;
+        const icon = button.querySelector('i');
+        
+        if (data.favorited) {
+            icon.classList.remove('text-muted');
+            icon.classList.add('text-danger');
+            button.setAttribute('data-favorited', 'true');
+            showToast('Adicionado aos favoritos!', 'success');
+        } else {
+            icon.classList.remove('text-danger');
+            icon.classList.add('text-muted');
+            button.setAttribute('data-favorited', 'false');
+            showToast('Removido dos favoritos', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        button.innerHTML = originalText;
+        
+        // Tentar rota alternativa
+        fetch(`/livros/${livroId}/favorite`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const icon = button.querySelector('i');
+            
+            if (data.favorited) {
+                icon.classList.remove('text-muted');
+                icon.classList.add('text-danger');
+                button.setAttribute('data-favorited', 'true');
+                showToast('Adicionado aos favoritos!', 'success');
+            } else {
+                icon.classList.remove('text-danger');
+                icon.classList.add('text-muted');
+                button.setAttribute('data-favorited', 'false');
+                showToast('Removido dos favoritos', 'info');
+            }
+        })
+        .catch(error => {
+            console.error('Erro em rota alternativa:', error);
+            showToast('Erro ao atualizar favoritos. Tente novamente.', 'error');
+        });
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+
+// Sistema de notificações
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.remove();
+        }
+    }, 4000);
+}
+
+// Atualizar contador do carrinho
+function updateCartCounter() {
+    fetch('/cart/count')
+        .then(response => response.json())
+        .then(data => {
+            const counter = document.querySelector('.cart-counter');
+            if (counter && data.count !== undefined) {
+                counter.textContent = data.count;
+                if (data.count > 0) {
+                    counter.style.display = 'inline';
+                } else {
+                    counter.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => console.error('Erro ao atualizar contador:', error));
+}
+</script>
+@endpush

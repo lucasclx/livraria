@@ -1,582 +1,337 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Livraria Mil Páginas')</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
-    <!-- Bootstrap CSS -->
+    <!-- CSS do Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Custom CSS -->
     <style>
         :root {
             --primary-brown: #8B4513;
             --dark-brown: #654321;
             --light-brown: #D2B48C;
             --cream: #F5F5DC;
-            --gold: #DAA520;
-            --dark-gold: #B8860B;
-            --paper: #FDF6E3;
-            --ink: #2C1810;
-            --aged-paper: #F4F1E8;
-            --burgundy: #800020;
-            --forest-green: #228B22;
+            --gold: #FFD700;
+            --dark-gold: #DAA520;
+            --white: #FFFFFF;
         }
 
         body {
-            font-family: 'Lora', serif;
-            background: linear-gradient(135deg, var(--aged-paper) 0%, var(--cream) 100%);
-            color: var(--ink);
-            min-height: 100vh;
-            position: relative;
-        }
-
-        /* Background pattern */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 20% 50%, rgba(218, 165, 32, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 80% 20%, rgba(139, 69, 19, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 40% 80%, rgba(218, 165, 32, 0.03) 0%, transparent 20%);
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        /* Header Styles */
-        .navbar {
-            background: linear-gradient(135deg, var(--dark-brown) 0%, var(--primary-brown) 100%);
-            box-shadow: 0 4px 20px rgba(139, 69, 19, 0.3);
-            backdrop-filter: blur(10px);
-            padding: 1rem 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
         }
 
         .navbar-brand {
             font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 1.8rem;
-            color: var(--gold) !important;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .navbar-brand::before {
-            content: '📚';
-            font-size: 1.5em;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
-        }
-
-        .nav-link {
-            color: var(--cream) !important;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-            padding: 0.5rem 1rem !important;
-            border-radius: 25px;
-        }
-
-        .nav-link:hover {
-            color: var(--gold) !important;
-            background: rgba(218, 165, 32, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: var(--gold);
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-
-        .nav-link:hover::after {
-            width: 80%;
-        }
-
-        /* Card Styles */
-        .card {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(139, 69, 19, 0.1);
-            backdrop-filter: blur(10px);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(139, 69, 19, 0.2);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
-            color: white;
-            font-family: 'Playfair Display', serif;
             font-weight: 600;
-            border-bottom: none;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        }
-
-        /* Book Card Styles */
-        .book-card {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .book-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(218, 165, 32, 0.3), transparent);
-            transition: left 0.6s ease;
-            z-index: 1;
-        }
-
-        .book-card:hover::before {
-            left: 100%;
-        }
-
-        .book-card:hover {
-            transform: translateY(-12px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(139, 69, 19, 0.25);
-        }
-
-        .book-cover {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-
-        .book-cover::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, transparent 0%, rgba(139, 69, 19, 0.1) 100%);
-        }
-
-        /* Button Styles */
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--dark-brown) 100%);
-            border: none;
-            border-radius: 25px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--dark-brown) 0%, var(--primary-brown) 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(139, 69, 19, 0.4);
+            font-size: 1.5rem;
         }
 
         .btn-gold {
             background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
             border: none;
-            color: white;
-            border-radius: 25px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 500;
+            color: var(--dark-brown);
+            font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
         }
 
         .btn-gold:hover {
-            background: linear-gradient(135deg, var(--dark-gold) 0%, var(--gold) 100%);
-            color: white;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(218, 165, 32, 0.4);
-        }
-
-        .btn-outline-elegant {
-            border: 2px solid var(--primary-brown);
-            color: var(--primary-brown);
-            background: transparent;
-            border-radius: 25px;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline-elegant:hover {
-            background: var(--primary-brown);
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Alert Styles */
-        .alert {
-            border: none;
-            border-radius: 15px;
-            border-left: 5px solid;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, rgba(34, 139, 34, 0.1) 0%, rgba(34, 139, 34, 0.05) 100%);
-            border-left-color: var(--forest-green);
-            color: var(--forest-green);
-        }
-
-        .alert-danger {
-            background: linear-gradient(135deg, rgba(128, 0, 32, 0.1) 0%, rgba(128, 0, 32, 0.05) 100%);
-            border-left-color: var(--burgundy);
-            color: var(--burgundy);
-        }
-
-        /* Typography */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Playfair Display', serif;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
             color: var(--dark-brown);
-            font-weight: 600;
         }
 
         .page-title {
-            font-size: 2.5rem;
+            font-family: 'Playfair Display', serif;
             color: var(--dark-brown);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-            display: inline-block;
         }
 
-        .page-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 60%;
-            height: 3px;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
-            border-radius: 2px;
+        .floating-book {
+            animation: float 3s ease-in-out infinite;
         }
 
-        /* Price styling */
-        .price {
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 1.4rem;
-            color: var(--forest-green);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-
-        /* Badge Styles */
-        .badge {
-            border-radius: 20px;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            font-size: 0.8rem;
-        }
-
-        .badge-category {
-            background: linear-gradient(135deg, var(--light-brown) 0%, var(--primary-brown) 100%);
-            color: white;
-        }
-
-        .badge-stock-ok {
-            background: linear-gradient(135deg, var(--forest-green) 0%, #32CD32 100%);
-        }
-
-        .badge-stock-low {
-            background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
-        }
-
-        .badge-stock-out {
-            background: linear-gradient(135deg, var(--burgundy) 0%, #DC143C 100%);
-        }
-
-        /* Search and Filter Styles */
-        .filter-card {
-            background: rgba(245, 245, 220, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(139, 69, 19, 0.1);
-        }
-
-        .form-control, .form-select {
-            border: 2px solid rgba(139, 69, 19, 0.2);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink);
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 0.2rem rgba(218, 165, 32, 0.25);
-            background: white;
-        }
-
-        /* Stats Card */
-        .stats-card {
-            background: linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(139, 69, 19, 0.1) 100%);
-            border: 1px solid rgba(218, 165, 32, 0.3);
-        }
-
-        .stat-number {
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            font-size: 2rem;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--dark-gold) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Footer */
-        .footer {
-            background: linear-gradient(135deg, var(--dark-brown) 0%, var(--ink) 100%);
-            color: var(--cream);
-            padding: 2rem 0;
-            margin-top: 4rem;
-        }
-
-        /* Animation */
-        @keyframes bookFloat {
+        @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
 
-        .floating-book {
-            animation: bookFloat 6s ease-in-out infinite;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .navbar-brand {
-                font-size: 1.5rem;
-            }
-            
-            .page-title {
-                font-size: 2rem;
-            }
-            
-            .card {
-                margin-bottom: 1rem;
-            }
-        }
-
-        /* Loading animation */
-        .loading-books::before {
-            content: '📖 📚 📖';
-            font-size: 1.5rem;
-            animation: bookFloat 2s ease-in-out infinite;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--aged-paper);
-        }
-
-        ::-webkit-scrollbar-thumb {
+        .bg-gradient-primary {
             background: linear-gradient(135deg, var(--primary-brown) 0%, var(--dark-brown) 100%);
-            border-radius: 6px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, var(--dark-brown) 0%, var(--primary-brown) 100%);
+        .cart-counter {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .navbar-nav .nav-link {
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        main {
+            min-height: calc(100vh - 200px);
         }
     </style>
     
     @stack('styles')
 </head>
 <body>
-  
-    <!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
-    <div class="container">
-        <a class="navbar-brand" href="{{ route('loja.index') }}">
-            Livraria Mil Páginas
-        </a>
-        
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="navbar-nav me-auto">
-                <a class="nav-link" href="{{ route('loja.catalogo') }}">
-                    <i class="fas fa-book me-1"></i>Catálogo
-                </a>
-                @auth
-                    @if(auth()->user()->is_admin)
-                        <a class="nav-link" href="{{ route('dashboard') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-                        </a>
-                        <a class="nav-link" href="{{ route('livros.index') }}">
-                            <i class="fas fa-cog me-1"></i>Admin
-                        </a>
-                    @endif
-                @endauth
-            </div>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient-primary shadow-lg">
+        <div class="container">
+            <a class="navbar-brand" href="{{ route('loja.index') }}">
+                <i class="fas fa-book-open me-2"></i>
+                Livraria Mil Páginas
+            </a>
             
-            <div class="navbar-nav">
-                <a class="nav-link position-relative" href="{{ route('cart.index') }}">
-                    <i class="fas fa-shopping-cart"></i>
-                    @php
-                        $cartCount = session('cart_id') ? \App\Models\Cart::withCount('items')->find(session('cart_id'))?->items_count : 0;
-                    @endphp
-                    @if($cartCount > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {{ $cartCount }}
-                        </span>
-                    @endif
-                </a>
-                
-                @guest
-                    <a class="nav-link" href="{{ route('login') }}">
-                        <i class="fas fa-sign-in-alt me-1"></i>Login
-                    </a>
-                    <a class="nav-link" href="{{ route('register') }}">
-                        <i class="fas fa-user-plus me-1"></i>Registrar
-                    </a>
-                @else
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i>{{ Auth::user()->name }}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('loja.index') }}">
+                            <i class="fas fa-home me-1"></i>Início
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('loja.catalogo') }}">
+                            <i class="fas fa-book me-1"></i>Catálogo
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-tags me-1"></i>Categorias
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('orders.index') }}">
-                                <i class="fas fa-list me-2"></i>Meus Pedidos
-                            </a></li>
-                            <li><a class="dropdown-item" href="{{ route('loja.favoritos') }}">
-                                <i class="fas fa-heart me-2"></i>Favoritos
-                            </a></li>
+                            @php
+                                $categorias = \App\Models\Categoria::ativo()->orderBy('nome')->limit(8)->get();
+                            @endphp
+                            @foreach($categorias as $categoria)
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('loja.categoria', $categoria->slug) }}">
+                                        {{ $categoria->nome }}
+                                    </a>
+                                </li>
+                            @endforeach
                             <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Sair
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </li>
+                            <li><a class="dropdown-item" href="{{ route('loja.catalogo') }}">Ver Todas</a></li>
                         </ul>
-                    </div>
-                @endguest
-            </div>
-        </div>
-    </div>
-</nav>
-    <!-- Main Content -->
-    <div class="container my-4">
-        <!-- Alerts -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <strong>Atenção!</strong>
-                <ul class="mb-0 mt-2">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
+                    </li>
+                    @auth
+                        @if(auth()->user()->is_admin)
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-1"></i>Admin
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('home') }}">Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('livros.index') }}">Gerenciar Livros</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('categorias.index') }}">Gerenciar Categorias</a></li>
+                                </ul>
+                            </li>
+                        @endif
+                    @endauth
                 </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
 
-        @yield('content')
-    </div>
+                <!-- Busca -->
+                <form class="d-flex me-3" action="{{ route('loja.buscar') }}" method="GET">
+                    <div class="input-group">
+                        <input class="form-control" type="search" name="q" placeholder="Buscar livros..." value="{{ request('q') }}">
+                        <button class="btn btn-outline-light" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
 
-    <!-- Footer -->
-    <footer class="footer mt-auto">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>📚 Livraria Mil Páginas</h5>
-                    <p class="mb-0">Organizando conhecimento, inspirando leitores.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0">
-                        <i class="fas fa-heart text-danger"></i>
-                        Feito com amor pelos livros
-                    </p>
-                    <small>© {{ date('Y') }} - Sistema de Gerenciamento de Livraria</small>
-                </div>
+                <!-- Menu do usuário -->
+                <ul class="navbar-nav">
+                    @auth
+                        <!-- Carrinho -->
+                        <li class="nav-item">
+                            <a class="nav-link position-relative" href="{{ route('cart.index') }}">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="cart-counter" id="cart-counter" style="display: none;">0</span>
+                            </a>
+                        </li>
+                        
+                        <!-- Favoritos -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('loja.favoritos') }}">
+                                <i class="fas fa-heart"></i>
+                            </a>
+                        </li>
+                        
+                        <!-- Menu do usuário -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ auth()->user()->name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ route('perfil.index') }}">Meu Perfil</a></li>
+                                <li><a class="dropdown-item" href="{{ route('orders.index') }}">Meus Pedidos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt me-1"></i>Sair
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    @else
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('register') }}">
+                                <i class="fas fa-user-plus me-1"></i>Cadastrar
+                            </a>
+                        </li>
+                    @endauth
+                </ul>
             </div>
         </div>
-    </footer>
+    </nav>
 
-    <!-- Bootstrap JS -->
+    <!-- Alertas -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('warning'))
+        <div class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('warning') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('info'))
+        <div class="alert alert-info alert-dismissible fade show m-3" role="alert">
+            <i class="fas fa-info-circle me-2"></i>{{ session('info') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- Conteúdo Principal -->
+    <main class="py-4">
+        <div class="container">
+            @yield('content')
+        </div>
+    </main>
+
+    <!-- Footer (Componente sem parâmetros) -->
+    <x-footer />
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom JavaScript -->
     <script>
-        // Image preview function
-        function previewImage(input, previewId) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById(previewId).src = e.target.result;
-                    document.getElementById(previewId).style.display = 'block';
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
+        // Atualizar contador do carrinho
+        function updateCartCounter() {
+            fetch('/cart/count')
+                .then(response => response.json())
+                .then(data => {
+                    const counter = document.getElementById('cart-counter');
+                    if (counter && data.count !== undefined) {
+                        counter.textContent = data.count;
+                        if (data.count > 0) {
+                            counter.style.display = 'flex';
+                        } else {
+                            counter.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => console.error('Erro ao atualizar contador:', error));
         }
 
-        // Stats modal
-        function showStats() {
-            // Implementar modal de estatísticas
-            alert('Funcionalidade de relatórios em desenvolvimento! 📊');
-        }
-
-        // Smooth scrolling
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Enhanced tooltips
+        // Carregar contador na inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+            @auth
+                updateCartCounter();
+            @endauth
         });
+
+        // Sistema de notificações toast
+        window.showToast = function(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : 'info'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast && toast.parentElement) {
+                    toast.remove();
+                }
+            }, 4000);
+        };
+
+        // Auto-dismiss de alertas após 5 segundos
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert:not(.position-fixed)');
+            alerts.forEach(alert => {
+                if (alert.classList.contains('show')) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            });
+        }, 5000);
     </script>
     
     @stack('scripts')
