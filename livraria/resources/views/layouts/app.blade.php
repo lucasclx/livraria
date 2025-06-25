@@ -133,7 +133,7 @@
                             <i class="fas fa-book me-1"></i>Catálogo
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
+                   <!--  <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="categoriasDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-tags me-1"></i>Categorias
                         </a>
@@ -151,7 +151,7 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ route('loja.catalogo') }}">Ver Todas</a></li>
                         </ul>
-                    </li>
+                    </li> -->
                     @auth
                         @if(auth()->user()->is_admin)
                             <li class="nav-item dropdown">
