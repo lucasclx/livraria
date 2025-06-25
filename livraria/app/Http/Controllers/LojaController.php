@@ -201,7 +201,8 @@ class LojaController extends Controller
         
         $livros = $query->paginate(12)->withQueryString();
         
-        // Dados para filtros
+        // --- CORREÇÃO APLICADA AQUI ---
+        // Dados para filtros, garantindo que os nomes das categorias sejam únicos
         $categorias = Categoria::ativo()
             ->whereHas('livros', function($query) {
                 $query->where('ativo', true);
@@ -210,7 +211,8 @@ class LojaController extends Controller
                 $query->where('ativo', true);
             }])
             ->orderBy('nome')
-            ->get();
+            ->get()
+            ->unique('nome'); // <- ESTA É A LINHA QUE RESOLVE O PROBLEMA
         
         return view('loja.catalogo', compact('livros', 'categorias'));
     }
