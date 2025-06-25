@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Editar Livro: ' . $livro->titulo)
+
 @section('content')
 <div class="container py-4">
     <div class="row justify-content-center">
@@ -11,10 +13,17 @@
                 </div>
 
                 <div class="card-body">
+                    {{-- 
+                        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        A CORREÇÃO CRÍTICA ESTÁ AQUI: enctype="multipart/form-data"
+                        Sem isto, o formulário não envia ficheiros.
+                        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    --}}
                     <form action="{{ route('livros.update', $livro->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
+                        {{-- O resto do seu formulário já estava perfeito --}}
                         <div class="row">
                             <div class="col-md-8 mb-3">
                                 <label for="titulo" class="form-label">Título <span class="text-danger">*</span></label>
@@ -45,7 +54,6 @@
                                 <input type="text" name="editora" class="form-control @error('editora') is-invalid @enderror"
                                         value="{{ old('editora', $livro->editora) }}" list="editoras-list">
                                 <datalist id="editoras-list">
-                                    {{-- Certifique-se que $editoras está sendo passado pelo controlador (LivroController@edit) --}}
                                     @foreach($editoras as $editora)
                                         <option value="{{ $editora }}">
                                     @endforeach
@@ -176,7 +184,6 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6 form-check form-switch">
-                                <!-- Input hidden para garantir que 'ativo' seja enviado como 0 se o checkbox for desmarcado -->
                                 <input type="hidden" name="ativo" value="0">
                                 <input type="checkbox" class="form-check-input" id="ativo" name="ativo" value="1" {{ old('ativo', $livro->ativo) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="ativo">Ativo</label>
