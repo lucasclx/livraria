@@ -3,7 +3,6 @@
 
 <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
     <div class="card book-card h-100">
-        <!-- Book Cover -->
         <div class="position-relative book-cover">
             @if($livro->imagem)
                 <img src="{{ $livro->imagem_url }}" class="card-img-top" alt="{{ $livro->titulo }}" 
@@ -15,7 +14,6 @@
                      style="height: 250px; object-fit: cover;">
             @endif
             
-            <!-- Favorite Icon (topo esquerdo) -->
             <div class="position-absolute top-0 start-0 m-2">
                 @auth
                     @php
@@ -28,7 +26,6 @@
                 @endauth
             </div>
             
-            <!-- Stock Status Badge (topo direito) -->
             <div class="position-absolute top-0 end-0 m-2">
                 @php
                     $statusEstoque = $livro->status_estoque ?? [
@@ -42,7 +39,6 @@
                 </span>
             </div>
 
-            <!-- Promotional/New Badge (esquerda, abaixo do coração) -->
             <div class="position-absolute start-0 m-2" style="top: 50px;">
                 @if($livro->created_at->diffInDays() < 30)
                     <span class="badge bg-success mb-1 d-block promo-badge">NOVO</span>
@@ -53,7 +49,6 @@
             </div>
         </div>
         
-        <!-- Book Info -->
         <div class="card-body d-flex flex-column">
             <div class="mb-auto">
                 <h6 class="card-title fw-bold mb-2" style="min-height: 3rem; line-height: 1.5;">
@@ -92,7 +87,6 @@
                     </p>
                 @endif
 
-                <!-- Ratings -->
                 @if(isset($livro->total_avaliacoes) && $livro->total_avaliacoes > 0)
                     <div class="mb-2">
                         <div class="d-flex align-items-center">
@@ -111,7 +105,6 @@
                 @endif
             </div>
             
-            <!-- Price -->
             <div class="mt-auto">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div>
@@ -133,10 +126,8 @@
             </div>
         </div>
         
-        <!-- Card Footer -->
         <div class="card-footer bg-transparent border-0 pt-0">
             @if($showAdminActions)
-                <!-- Admin Actions -->
                 <div class="d-flex justify-content-between gap-1">
                     <a href="{{ route('livros.show', $livro) }}" 
                        class="btn btn-outline-info btn-sm flex-fill" 
@@ -159,7 +150,6 @@
                     </form>
                 </div>
             @else
-                <!-- Customer Actions -->
                 <div class="d-grid gap-2">
                     @if($livro->estoque > 0)
                         <form method="POST" action="{{ route('cart.add', $livro) }}" class="form-add-cart">

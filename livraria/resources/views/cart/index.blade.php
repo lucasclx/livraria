@@ -3,7 +3,6 @@
 
 @section('content')
 <div class="cart-page">
-    <!-- Header do Carrinho -->
     <div class="cart-header mb-4">
         <div class="row align-items-center">
             <div class="col-md-8">
@@ -37,21 +36,18 @@
         </div>
     @endif
 
-    <!-- Loading para operações do carrinho -->
     <div id="cart-loading" style="display: none;">
         <x-loading-spinner />
     </div>
 
     @if($items->count() > 0)
         <div class="row" id="cart-content">
-            <!-- Lista de Itens -->
             <div class="col-lg-8">
                 <div class="cart-items">
                     @foreach($items as $item)
                         <div class="cart-item card mb-3" data-item-id="{{ $item->id }}">
                             <div class="card-body">
                                 <div class="row align-items-center">
-                                    <!-- Imagem do Livro -->
                                     <div class="col-md-2 col-3">
                                         <div class="item-image">
                                             @if($item->livro->imagem)
@@ -66,7 +62,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Informações do Livro -->
                                     <div class="col-md-4 col-9">
                                         <div class="item-info">
                                             <h6 class="item-title mb-1">
@@ -82,7 +77,6 @@
                                                 <span class="badge bg-secondary small">{{ $item->livro->categoria->nome }}</span>
                                             @endif
                                             
-                                            <!-- Status do Estoque -->
                                             <div class="stock-status mt-2">
                                                 @if($item->livro->estoque >= $item->quantity)
                                                     <small class="text-success">
@@ -97,7 +91,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Preço Unitário -->
                                     <div class="col-md-2 col-6">
                                         <div class="item-price text-center">
                                             <strong class="text-success">{{ $item->livro->preco_formatado }}</strong>
@@ -105,7 +98,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Quantidade -->
                                     <div class="col-md-2 col-6">
                                         <div class="quantity-controls">
                                             <form method="POST" action="{{ route('cart.item.update', $item) }}" 
@@ -129,7 +121,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Subtotal e Ações -->
                                     <div class="col-md-2 col-12">
                                         <div class="item-total text-center">
                                             <strong class="h6 text-success">
@@ -153,7 +144,6 @@
                         </div>
                     @endforeach
 
-                    <!-- Botão Limpar Carrinho -->
                     <div class="cart-actions text-end mb-4">
                         <form method="POST" action="{{ route('cart.clear') }}" class="d-inline-block clear-cart-form">
                             @csrf
@@ -166,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- Resumo do Pedido -->
             <div class="col-lg-4">
                 <div class="order-summary sticky-top">
                     <div class="card">
@@ -176,19 +165,16 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            <!-- Itens -->
                             <div class="summary-line d-flex justify-content-between mb-2">
                                 <span>Subtotal ({{ $itemCount }} itens):</span>
                                 <span>R$ {{ number_format($total, 2, ',', '.') }}</span>
                             </div>
 
-                            <!-- Frete -->
                             <div class="summary-line d-flex justify-content-between mb-2">
                                 <span>Frete:</span>
                                 <span class="text-success">A calcular</span>
                             </div>
 
-                            <!-- Cupom de Desconto -->
                             <div class="coupon-section mb-3">
                                 <label class="form-label small">Cupom de Desconto:</label>
                                 <div class="input-group input-group-sm">
@@ -202,13 +188,11 @@
 
                             <hr>
                             
-                            <!-- Total -->
                             <div class="summary-total d-flex justify-content-between mb-3">
                                 <strong>Total:</strong>
                                 <strong class="text-success h5">R$ {{ number_format($total, 2, ',', '.') }}</strong>
                             </div>
 
-                            <!-- Botões de Ação -->
                             <div class="d-grid gap-2">
                                 @auth
                                     <button class="btn btn-primary btn-lg" id="checkout-btn" onclick="goToCheckout()">
@@ -225,7 +209,6 @@
                                 </button>
                             </div>
 
-                            <!-- Segurança -->
                             <div class="security-info mt-3 p-2 bg-light rounded">
                                 <div class="d-flex align-items-center mb-1">
                                     <i class="fas fa-shield-alt text-success me-2"></i>
@@ -242,7 +225,6 @@
             </div>
         </div>
 
-        <!-- Sugestões de Produtos -->
         @if($sugestoes->count() > 0)
             <div class="suggestions-section mt-5">
                 <h3 class="section-title mb-4">
@@ -250,16 +232,19 @@
                 </h3>
                 <div class="row">
                     @foreach($sugestoes as $sugestao)
-                        <div class="col-lg-3 col-md-6 mb-4">
-                            @include('components.livro-card', ['livro' => $sugestao])
-                        </div>
+                        {{-- 
+                            CÓDIGO CORRIGIDO: 
+                            A div que envolvia o @include foi removida.
+                            O componente 'livro-card' agora é chamado diretamente dentro do .row,
+                            permitindo que ele crie sua própria coluna e que o alinhamento funcione.
+                        --}}
+                        @include('components.livro-card', ['livro' => $sugestao])
                     @endforeach
                 </div>
             </div>
         @endif
 
     @else
-        <!-- Carrinho Vazio -->
         <div class="empty-cart text-center py-5" id="empty-cart-state">
             <div class="empty-cart-icon mb-4">
                 <i class="fas fa-shopping-cart fa-5x text-muted"></i>
@@ -280,7 +265,6 @@
     @endif
 </div>
 
-<!-- Modal de Compartilhar Carrinho -->
 <div class="modal fade" id="shareCartModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -306,7 +290,6 @@
     </div>
 </div>
 
-<!-- Modal de Checkout Loading -->
 <div class="modal fade" id="checkoutLoadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
